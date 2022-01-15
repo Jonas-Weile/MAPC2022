@@ -1,0 +1,20 @@
+use "knowledge" as knowledge.
+
+use "modules/percept/getInitialPercepts".
+use "modules/percept/initBeliefState".
+use "modules/goal/initGoals".
+use "modules/communication/initCommunication".
+
+module mapcInit {
+	% Get initial percepts from environment
+	if true then getInitialPercepts.
+	
+	% Set the initial belief state from given percepts
+	if true then initBeliefState.
+	
+	% Adopt initial goals
+	if true then initGoals.
+	
+	% Set initial communication channels
+	if true then initCommunication.
+}

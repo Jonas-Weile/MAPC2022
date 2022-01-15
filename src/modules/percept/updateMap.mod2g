@@ -1,0 +1,59 @@
+use "../../knowledge" as knowledge.
+
+module updateMap {
+
+	forall bel(agentOffset(Agent, OffsetX, OffsetY)) do {
+	
+		if true then delete(agentOffset(Agent, OffsetX, OffsetY)).
+	
+		if bel(translateCoordinatesToMyOrigin(OffsetX, OffsetY, XFromMyOrigin, YFromMyOrigin)),
+		   not(bel(agentOffset(Agent, XFromMyOrigin, YFromMyOrigin)))
+		then insert(agentOffset(Agent, XFromMyOrigin, YFromMyOrigin)).
+	} 
+	
+	forall bel(dispenser(Xd, Yd, Details)) do {
+		
+		if true then delete(dispenser(Xd, Yd, Details)).
+		     
+		if bel(translateCoordinatesToMyOrigin(Xd, Yd, XFromMyOrigin, YFromMyOrigin)),
+		   not(bel(dispenser(XFromMyOrigin, YFromMyOrigin, Details)))
+		then insert(dispenser(XFromMyOrigin, YFromMyOrigin, Details)).
+	
+	}
+	
+	forall bel(goalCell(Xgc, Ygc)) do {
+	
+		if true then delete(goalCell(Xgc, Ygc)).
+		
+		if bel(translateCoordinatesToMyOrigin(Xgc, Ygc, XFromMyOrigin, YFromMyOrigin)),
+		   not(bel(goalCell(XFromMyOrigin, YFromMyOrigin)))
+		then insert(goalCell(XFromMyOrigin, YFromMyOrigin)).
+		     
+	}
+	
+	forall bel(taskboard(Xt, Yt)) do {
+	
+		if true then delete(taskboard(Xt, Yt)).
+		
+		if bel(translateCoordinatesToMyOrigin(Xt, Yt, XFromMyOrigin, YFromMyOrigin)),
+		   not(bel(taskboard(XFromMyOrigin, YFromMyOrigin)))
+		then insert(taskboard(XFromMyOrigin, YFromMyOrigin)).
+	
+	}
+	
+	forall bel(visited(Xv, Yv, Step)) do {
+		if true then delete(visited(Xv, Yv, Step)).
+		
+		if bel(translateCoordinatesToMyOrigin(Xv, Yv, XFromMyOrigin, YFromMyOrigin)),
+		   not(bel(visited(XFromMyOrigin, YFromMyOrigin, Step)))
+		then insert(visited(XFromMyOrigin, YFromMyOrigin, Step)).
+	}
+	
+	if bel(myPosition(MyX, MyY)) then {
+		if true then delete(myPosition(MyX, MyY)).
+		
+		if bel(translateCoordinatesToMyOrigin(MyX, MyY, XFromMyOrigin, YFromMyOrigin))
+		then insert(myPosition(XFromMyOrigin, YFromMyOrigin)).
+		
+	}
+}

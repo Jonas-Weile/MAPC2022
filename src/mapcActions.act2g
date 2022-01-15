@@ -1,0 +1,57 @@
+use "knowledge" as knowledge.
+
+% move
+define move(Direction) with
+	pre { true }
+	post { true }
+	
+% request
+define request(Direction) with
+	pre { true }
+	post { true }
+
+% rotate
+define rotate(Direction) with
+	pre { true }
+	post { true }
+	
+% attach
+define attach(Direction) with
+	pre { true }
+	post { true }
+	
+% detach
+define detach(Direction) with
+	pre { true }
+	post { true }
+	
+% disconnect
+define disconnect(X1, Y1, X2, Y2) with
+	pre { true }
+	post { true }
+	
+% connect
+define connect(Agent, X, Y) with
+	pre { true }
+	post { true }
+	
+% submit
+define submit(Task) with
+	pre { true }
+	post { true }
+	
+% clear
+define clear(X, Y) with
+	pre { true }
+	post { true }
+	
+% accept
+define accept(TaskName) with
+	pre { true }
+	post{ true }
+		
+% skip
+define skip with
+	pre { true }
+	post{ true }
+		

@@ -1,0 +1,190 @@
+use "../../knowledge" as knowledge.
+
+module updateBeliefState {
+	
+	
+	%%%%%%%%% ACTIONS - Update beliefs according to the result of last action %%%%%%%%%
+	if bel(actionPlan(Plan)),
+	   not(bel(lastActionResult(success)))
+	then delete(actionPlan(Plan)).
+	
+	
+	if bel(lastActionResult(success), lastActionParams(P)) then {
+	
+		if bel(actionPlan([Succeeded|Rest]))
+		then {
+			if true then delete(actionPlan([Succeeded|Rest])).
+			if not(bel(Rest = [])) then insert(actionPlan(Rest)).
+		}
+		
+		% move
+		if bel(lastAction(move), P = [Dir]),
+		   bel(step(Step)) then {
+		   
+			% Update my poisition
+			if bel(myPosition(X, Y)), 
+			   bel(translate(Dir, X, Y, X2, Y2)),
+			   bel(translateCoordinatesToMyOrigin(X2, Y2, XFromMyOrigin, YFromMyOrigin)) then
+			delete(myPosition(X, Y)) + 
+			insert(myPosition(XFromMyOrigin, YFromMyOrigin)) +
+			insert(visited(XFromMyOrigin, YFromMyOrigin, Step)).
+		}		
+		
+		if bel(lastAction(accept), P = [Task]) then	insert(accepted(Task)).
+		if bel(lastAction(submit), P = [Task]) then	insert(submitted(Task)).
+		
+		% Connecting a block
+		if bel(lastAction(connect), P = [Agent, X, Y]),
+		   bel(atom_number(X, X2)),
+		   bel(atom_number(Y, Y2))
+		then {
+		 	if true then insert(connectionFromTo(X2, Y2, Agent)).
+
+		 	if bel(connectionToInfo(ToX, ToY)) 
+		 	then insert(connectionFromTo(X2, Y2, ToX, ToY, Agent)) +
+		 	     delete(connectionToInfo(ToX, ToY)).
+		 	
+		 	
+		}
+		
+		
+		% disconnection
+		if bel(lastAction(disconnect), P = [X1, Y1, _, _]),
+		   bel(atom_number(X1, X1_num)),
+		   bel(atom_number(Y1, Y1_num)),
+		   bel(translate(Dir, 0, 0, X1_num, Y1_num)),
+		   bel(connectedBlocks(Dir, ConnectedBlocks))
+		then {
+			forall bel(member((BlockX, BlockY, Agent), ConnectedBlocks)) 
+		  	do {
+		  		if true then delete(connectionFromTo(BlockX, BlockY, Agent)).
+		  		if bel(connectionFromTo(BlockX, BlockY, ToX, ToY, Agent))
+		  		then delete(connectionFromTo(BlockX, BlockY, ToX, ToY, Agent)).
+		  	}
+		}
+		
+		% Attaching a block
+		if bel(lastAction(attach), P = [Dir]),
+		   bel(translate(Dir, 0, 0, Xr, Yr))
+		then insert(attachedToMe(Xr, Yr)).
+		
+		% Detaching a block
+		if bel(lastAction(detach), P = [Dir]) then {
+			 
+			if bel(translate(Dir, 0, 0, Xr, Yr)),
+			   bel(attachedToMe(Xr, Yr))
+			then delete(attachedToMe(Xr, Yr)).
+				   
+		   	if bel(connectedBlocks(Dir, ConnectedBlocks)) then {
+		  	  	forall bel(member((BlockX, BlockY, Agent), ConnectedBlocks)) 
+		  	   		do delete(connectionFromTo(BlockX, BlockY, Agent)).
+		   }
+		}
+		
+		% Rotating
+		if bel(lastAction(rotate), P = [R]) then {
+			forall bel(attachedToMe(Xa, Ya)),
+				   bel(rotation90(R, Xa, Ya, Xa_rot, Ya_rot))
+			do {
+			    	if true then delete(attachedToMe(Xa, Ya)).
+			    	if true then insert(attachedToMe(Xa_rot, Ya_rot)).
+			}
+		}
+	
+	
+		% Clear: Update obstacles
+		if percept(lastAction(clear)),
+		   bel(P = [AtomX, AtomY]), 
+		   bel(atom_number(AtomX, X), atom_number(AtomY, Y)) 
+		then {
+		
+			if bel(clearStepsCounter(Steps), IncSteps is Steps +1) 
+			then delete(clearStepsCounter(Steps)) + insert(clearStepsCounter(IncSteps)).
+			
+			if bel(completedClearAction(OldEnergy)), 
+			   bel(energy(NewEnergy), OldEnergy > NewEnergy),
+			   bel(clearStepsCounter(ClearSteps)),
+			   bel(ClearEnergyCost is (OldEnergy - NewEnergy - 1)/ClearSteps) 
+			then {
+				if true then delete(completedClearAction(OldEnergy)).
+				if bel(clearing(X, Y)) then delete(clearing(X, Y)).
+				if true then delete(clearStepsCounter(ClearSteps)) + insert(clearStepsCounter(0)).
+				if bel(clearSteps(OldSteps), OldSteps =\= ClearSteps)  then delete(clearSteps(OldSteps)) + insert(clearSteps(ClearSteps)).
+				if bel(clearEnergyCost(ActionCost), ActionCost =\= ClearEnergyCost)  then delete(clearEnergyCost(ActionCost)) + insert(clearEnergyCost(ClearEnergyCost)).
+			}
+		}
+	}	
+	
+	
+	% This is only to be safe if we start with something attached
+	forall bel(attached(Xr, Yr)), 
+	       not(bel(attachedToMe(Xr, Yr))),
+	       bel(translate(_, 0, 0, Xr, Yr)),
+	       not(bel(
+       			thing(Xt, Yt, Type, _),
+	       		(Type = block ; Type = entity),
+	       		translate(_, Xr, Yr, Xt, Yt)
+       	   ))
+	do insert(attachedToMe(Xr, Yr)) + print("Attached from percept", Xr, Yr).
+				
+	% Remove attached		
+	forall bel(attachedToMe(Xr, Yr)), not(bel(attached(Xr, Yr))) 
+		do delete(attachedToMe(Xr, Yr)).
+	
+	
+	%%%%%%%%% Update beliefs about connected blocks! %%%%%%%%%%%%%%%%%%%%
+	forall bel(connectionToInfo(ToX, ToY))
+	do     delete(connectionToInfo(ToX, ToY)).
+	
+	forall bel(connectionFromTo(X, Y, Agent)),
+	       not(bel(thing(X, Y, block, _)))
+	do delete(connectionFromTo(X, Y, Agent)).
+	
+	forall bel(connectionFromTo(X, Y, ToX, ToY, Agent)),
+	       not(bel(thing(X, Y, block, _)))
+	do delete(connectionFromTo(X, Y, ToX, ToY, Agent)).
+	
+	
+	%%%%%%%%% THINGS - store/remove things - Taskboards and dispensers are permanent %%%%%%%%%
+	forall bel(thing(Xr, Yr, Type, Details)), 
+	       bel(relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y)) do {
+	 	if bel(Type = taskboard,  not(taskboard(X, Y))) then {
+	 		if true then insert(taskboard(X, Y)).
+	 		
+	 		% If I'm part of a team, share it
+	 		if bel(agentOffset(_, _, _)) then insert(share(taskboard(X, Y))).
+	 	}
+	 	
+	 	if bel(Type = dispenser, not(dispenser(X, Y, Details))) then {
+	 		if true then insert(dispenser(X, Y, Details)).
+	 		
+	 		% If I'm part of a team, share it
+	 		if bel(agentOffset(_, _, _)) then insert(share(dispenser(X, Y, Details))).
+	 	}
+	 }
+	
+	
+	%%%%%%%%% GOALCELLS - insert beliefs about goals as permanent goalCells %%%%%%%%%
+	forall bel(goal(Xr, Yr)), 
+	       bel(relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y)),
+	       not(bel(goalCell(X, Y))) 
+	do {
+		if true then insert(goalCell(X, Y)).
+		
+ 		% If I'm part of a team, share it
+ 		if bel(agentOffset(_, _, _)) then insert(share(goalCell(X, Y))).
+	}
+	
+	
+	%%%%%%%%% DISABLED - If the agent was disabled, clear all attachements %%%%%%%%%
+	if bel(disabled(true)) then {
+		forall bel(attachedToMe(X, Y))
+			do delete(attachedToMe(X, Y)).
+			
+		forall bel(connectionFromTo(BlockX, BlockY, Agent))
+		    do delete(connectionFromTo(BlockX, BlockY, Agent)).
+		    
+		forall bel(connectionFromTo(X, Y, ToX, ToY, Agent))
+	      do delete(connectionFromTo(X, Y, ToX, ToY, Agent)).
+	}
+}

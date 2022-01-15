@@ -1,0 +1,33 @@
+use "../../knowledge" as knowledge.
+
+
+module updateGoals {
+	%%%%%%%%%%%%%%%%%%%% TASKS %%%%%%%%%%%%%%%%%%%%
+	
+
+	%%%%%%%%%%%%%%%%%%%% EXPLORING %%%%%%%%%%%%%%%%%%%%
+	%%% DROP GOALS %%%
+	if a-goal(fullyEquipped), not(bel(availableAttachmentSpots(_, _))) then drop(fullyEquipped).
+	
+	if a-goal(fullyConnected) then {
+		if bel(findall(Agent, agentOffset(Agent, _, _), Connections)), 
+		   bel(length(Connections, L), L1 is L + 1, teamSize(L1)) 
+			then drop(fullyConnected) + print("FULLY CONNECTED!").
+	}
+	
+	if a-goal(findMapDimensions),
+	   bel(poloidalCircumference(_)), 
+	   bel(toroidalCircumference(_))
+	then drop(findMapDimensions) + print("Found Dimensions").
+
+
+	%%% ADOPT GOALS %%%
+	if goal(explore) then {
+		if not(goal(fullyEquipped)), bel(availableAttachmentSpots(_, _)) then adopt(fullyEquipped).
+	}
+	
+	if bel(teamSize(TeamSize), TeamSize > 30),
+	   bel(step(S), S = 6)
+	then adopt(fullyConnected) +
+	     adopt(findMapDimensions).
+}

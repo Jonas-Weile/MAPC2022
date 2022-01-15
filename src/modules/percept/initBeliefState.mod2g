@@ -1,0 +1,19 @@
+use "../../knowledge" as knowledge.
+
+module initBeliefState {
+
+	% Current step - start at step 0
+	if true then
+		insert(step(0)).		
+		
+	% Current location - set to (0, 0)
+	if true then
+		insert(myPosition(0, 0)) +
+	    insert(visited(0, 0, 0)).
+	    
+	% Generate direction list permutations
+	if bel(name(N), nameToSeed(N, Seed)) then {
+		forall bel(generateEnumDirList(P, V, Seed)) do
+			insert(enumDirList(P, V)).
+	}
+}

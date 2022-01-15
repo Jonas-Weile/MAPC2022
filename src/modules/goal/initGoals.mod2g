@@ -1,0 +1,13 @@
+use "../../knowledge" as knowledge.
+
+module initGoals {
+
+	% Set the default / fallback goal to explore the map.
+	if true then adopt(explore).
+	if true then adopt(fullyEquipped).
+	
+	if bel(teamSize(TeamSize), TeamSize =< 30)
+	then adopt(fullyConnected) +
+	     adopt(findMapDimensions).
+
+}

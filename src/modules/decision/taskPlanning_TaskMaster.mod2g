@@ -1,0 +1,119 @@
+use "../../knowledge" as knowledge.
+
+
+module taskPlanning_TaskMaster {
+	
+	if bel(step(CurrentStep)), bel(name(MyName)) then {
+		
+		% Send requests for resource information, if that has not been done.
+		% record whenever this is done.
+		if not(bel(resourceRequestSent(_, _))), 
+		   bel(nameToChannel(MyName, Channel)), 
+		   bel(taskboard(_, _)), 
+		   bel(availableGoalZones(GoalCells)),
+		   bel(getNewTasksRanked([[_, HighestRankedTask]|_]))
+	    then
+			(Channel).send?(resourceRequest(HighestRankedTask, GoalCells)) + 
+			insert(resourceRequestSent(HighestRankedTask, CurrentStep)).
+		
+		
+		% Save all replies - only use them once 3 steps have surpassed
+		if bel(resourceRequestSent(Task, Step)), bel(step(CurrentStep), CurrentStep =< Step + 3) then {
+			listall AnswersList <- (Agent).sent!(resourceReply(Task, Resources)) do {
+				forall bel(member(Answer, AnswersList)) do insert(savedResourceReply(Answer)).
+			}
+		}
+	}
+	
+	% If we have sent resource requests - wait #SOME# turns - here just set to 3 for testing
+	if bel(resourceRequestSent(Task, Step)), 
+	   bel(step(CurrentStep)), 
+	   bel(CurrentStep is Step + 3),
+	   bel(task(TaskName, _, _, _) = Task)
+	then {
+	
+		% Mark task as checked
+		if true then insert(checkedTask(TaskName)).
+	
+		% Combine new answers with saved answers and - Do the planning -
+		if bel(name(MyName)),
+		   bel(getAllSavedResourceReplies(Task, Answers)),
+		   bel(findPlan(Task, Answers, TaskPlan)), 
+		   bel(TaskPlan \= []) then {
+					
+			%%% DEBUG	
+			if true
+			then print(TaskPlan).
+			
+			% Save the plan
+			if true
+			then insert(taskPlan(TaskPlan)) +
+			     insert(taskTaken(MyName, TaskName)).
+					
+			% Create task-channel
+			if bel(taskToChannel(MyName, TaskName, Channel)) 
+			then subscribe(Channel).
+			
+			forall bel(member((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), TaskPlan)) do
+				(Agent).send!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) +
+				insert(occupied(TaskName, Agent)).
+			
+			% Mark the GoalZone as occupied
+			if bel(goalZoneFromTaskPlan(TaskPlan, GoalZone)) 
+			then insert(occupied(TaskName, GoalZone)).
+		
+		}
+		
+		% Delete the requests-sent belief
+		if true 
+		then delete(resourceRequestSent(Task, Step)).
+		
+		% Delete all saved replies
+		forall bel(savedResourceReply(Reply)) 
+		do delete(savedResourceReply(Reply)).
+	}	
+
+		
+	% Dropping a task	
+	forall bel(taskPlan(TaskPlan))
+	do {
+		if bel(member((_, TaskName, ETA, _, _, _, _), TaskPlan)) then {
+		
+			if (DroppingAgent).sent!(dropTask(TaskName)), 
+			   not(bel(deleteTask(TaskName)))
+			then print("Someone dropped the task!: ", DroppingAgent, TaskName) +
+				 insert(deleteTask(TaskName)).
+				 
+			if (SubmittingAgent).sent!(taskSubmitted(TaskName))
+			then print("Someone submitted the task!: ", SubmittingAgent, TaskName) +
+		   		insert(deleteTask(TaskName)).
+				 
+			%if bel(step(Step), Step > ETA),
+			%   not(bel(deleteTask(TaskName)))
+			%then insert(deleteTask(TaskName)) +
+			%     print("Task is outdated", TaskName).
+			     
+			if not(bel(task(TaskName, _, _, _))),
+			   not(bel(deleteTask(TaskName)))
+			then insert(deleteTask(TaskName)).
+		}
+	}
+		
+	% Delete tasks
+	forall bel(deleteTask(TaskName))
+	do {
+		if bel(name(MyName)) then {
+			forall bel(occupied(TaskName, Thing)) do
+			delete(occupied(TaskName, Thing)).
+			
+			if bel(taskPlan(TaskPlan)),
+			   bel(member((_, TaskName, _, _, _, _, _), TaskPlan))
+			then delete(taskPlan(TaskPlan)).
+			
+			if bel(taskToChannel(MyName, TaskName, Channel))
+			then unsubscribe(Channel).
+						
+			if true then delete(deleteTask(TaskName)).			
+		}
+	}
+}

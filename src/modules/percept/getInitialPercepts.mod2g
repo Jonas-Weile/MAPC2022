@@ -1,0 +1,34 @@
+use "../../knowledge" as knowledge.
+
+module getInitialPercepts {	
+	% Total number of sim steps
+	if percept(steps(X)) then
+		insert(steps(X)).
+		
+	% Expected agent vision range
+	if percept(vision(X)) then
+		insert(vision(X)).
+	
+	% Agent name
+	if percept(name(X)) then
+		insert(name(X)).
+		
+	% Team name
+	if percept(team(X)) then
+		insert(team(X)).
+		
+	% Team size
+	if percept(teamSize(N)) then
+		insert(teamSize(N)).
+		
+	% Energy
+	if percept(energy(E)) then 
+		insert(energy(E)) +
+		insert(maxEnergy(E)).
+		
+	% Set initial clear-beliefs
+	if true then 
+		insert(clearSteps(3)) 
+		+ insert(clearStepsCounter(0))
+		+ insert(clearEnergyCost(30)).
+}

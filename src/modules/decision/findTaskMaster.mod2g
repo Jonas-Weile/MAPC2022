@@ -1,0 +1,26 @@
+use "../../knowledge" as knowledge.
+
+module findTaskMaster {
+	
+	if bel(
+		findall(ConnectedAgent, agentOffset(ConnectedAgent, _, _), ConnectedAgents), length(ConnectedAgents, NrOfConnectedAgents)
+	), 
+	bel(teamSize(TeamSize)),
+	bel(HalfOfTeam is TeamSize/2)
+	then {
+		
+		% Check if we need to appoint a taskMaster
+		if bel(NrOfConnectedAgents + 1 > HalfOfTeam) then {
+
+			% Find the new taskmasters
+		 	if bel(nextTaskMaster(ConnectedAgents, NextTaskMaster)) then {
+		 					
+				% Appoint new taskMasters
+				if bel(nameToChannel(NextTaskMaster, Channel)) then 
+					insert(taskMaster(NextTaskMaster)) + print("TaskMaster: ", NextTaskMaster) +
+					subscribe(Channel).
+			}
+		}
+	}
+	
+}

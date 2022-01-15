@@ -1,0 +1,67 @@
+use "../../knowledge" as knowledge.
+
+
+module receiveConnectionRequests {
+	
+	if bel(step(PrevStep), CurrentStep is PrevStep + 1) then {
+		
+		% Receive requests and save them
+		listall Requests <- (_).sent?(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)) do {
+			forall bel(member([AgentName, AgentX, AgentY, CEPs, Step], Requests))
+			do insert(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)).
+		}
+		
+		% Check all requests three turns back
+		if bel(CurrentStep > 3),
+		   bel(Step is CurrentStep - 3),
+	 	   bel(getAllConnectionRequestsFromStep(Step, ConnectionRequests)), 
+	       bel(length(ConnectionRequests, Len))
+		then {
+			
+			if bel(teamSize(Len)),
+			   bel(uniqueConnectionRequests(ConnectionRequests, UniqueRequests)) 
+			then {
+			
+				% For all the unique members.... which is not me or one that I know already
+				forall bel(member((AgentName, AgentX, AgentY, Xr, Yr, CEP), UniqueRequests)), 
+					   bel(not(name(AgentName)))  
+				do {
+					if bel(LocalX is -Xr, LocalY is -Yr),
+					   bel(savedCommonEnvironmentPercepts((MyX, MyY), CommonEnvironmentPercepts, Step)),
+					   bel((LocalX, LocalY, MyCEP) = CommonEnvironmentPercepts),
+					   bel(matchingEnvironmentPercepts(CEP, MyCEP, LocalX, LocalY)),
+					   bel(OffsetX is (MyX + LocalX) - AgentX, OffsetY is (MyY + LocalY) - AgentY),
+					   bel(translateCoordinatesToMyOrigin(OffsetX, OffsetY, OffsetXFromMyOrigin, OffsetYFromMyOrigin))
+					then {				
+					  	
+					  	if not(bel(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin))),
+						   not(bel(agentOffset(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)))
+						then {
+							if not(bel(agentOffset(AgentName, _, _)))
+							then insert(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)).
+							
+							%%% TODO %%%
+							if not(goal(fullyConnected)),
+							   bel(agentOffset(AgentName, OtherOffsetX, OtherOffsetY)),
+							   bel(findCircumferencesFromOffsets(OffsetX, OffsetY, OtherOffsetX, OtherOffsetY, L)),
+							   bel(findBestMapDimensions(L, MapDimensions))
+							then all.send!(newDimensions(MapDimensions)) +
+							     print(MapDimensions).
+						}
+						
+					}
+				}				
+			}
+			
+			if not(bel(teamSize(Len))) then print("I DID NOT RECEIVE ALL REQUESTS!!!").
+			
+			
+			forall bel(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step))
+			do delete(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)).
+			
+			forall bel(savedCommonEnvironmentPercepts(MyPosition, CommonEnvironmentPercepts, Step))
+			do delete(savedCommonEnvironmentPercepts(MyPosition, CommonEnvironmentPercepts, Step)).
+		
+		}
+	}		
+}

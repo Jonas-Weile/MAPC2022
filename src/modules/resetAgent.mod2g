@@ -1,0 +1,55 @@
+use "..\knowledge.pl" as knowledge.
+
+
+module resetAgent {
+	% Drop Goals
+	if goal(explore) then drop(explore).
+	if goal(fullyEquipped) then drop(fullyEquipped).
+	if goal(fullyConnected) then drop(fullyConnected). 
+	if goal(findMapDimensions) then drop(findMapDimensions).
+	
+	% Delete all initial beliefs
+	if bel(step(X)) 	then delete(step(X)).
+	if bel(score(X)) 	then delete(score(X)).
+	if bel(teamSize(X)) then delete(teamSize(X)).
+	if bel(myPosition(X, Y)) then delete(myPosition(X, Y)).
+		
+	% Delete all beliefs
+	forall bel(share(X)) do delete(share(X)).
+	forall bel(goal(X, Y)) do delete(goal(X, Y)).
+	forall bel(accepted(X)) do delete(accepted(X)).
+	forall bel(taskPlan(TP)) do delete(taskPlan(TP)).
+	forall bel(submitted(X)) do delete(submitted(X)).
+	forall bel(deleteTask(T)) do delete(deleteTask(T)).
+	forall bel(obstacle(X, Y)) do delete(obstacle(X, Y)).
+	forall bel(goalCell(X, Y)) do delete(goalCell(X, Y)).
+	forall bel(taskboard(X, Y)) do delete(taskboard(X, Y)).
+	forall bel(taskSubmitted(T)) do delete(taskSubmitted(T)).
+	forall bel(resourceReply(R)) do delete(resourceReply(R)).
+	forall bel(enumDirList(P, V)) do delete(enumDirList(P, V)).
+	forall bel(submitAgent(Agent)) do delete(submitAgent(Agent)).
+	forall bel(taskPlanToDo(ToDo)) do delete(taskPlanToDo(ToDo)).
+	forall bel(visited(X, Y, Step)) do delete(visited(X, Y, Step)).
+	forall bel(taskTaken(By, Task)) do delete(taskTaken(By, Task)).
+	forall bel(attachedToMe(Xr, Yr)) do delete(attachedToMe(Xr, Yr)).
+	forall bel(blockDelivered(Block)) do delete(blockDelivered(Block)).
+	forall bel(resourceRequest(T, R)) do delete(resourceRequest(T, R)).
+	forall bel(occupied(Task, Thing)) do delete(occupied(Task, Thing)).
+	forall bel(savedResourceReply(R)) do delete(savedResourceReply(R)).
+	forall bel(dispenser(X, Y, Details)) do delete(dispenser(X, Y, Details)).
+	forall bel(agentOffset(Agent, X, Y)) do delete(agentOffset(Agent, X, Y)).
+	forall bel(connectionUpdate(Update)) do delete(connectionUpdate(Update)).
+	forall bel(resourceRequestSent(T, R)) do delete(resourceRequestSent(T, R)).
+	forall bel(thing(X, Y, Type, Details)) do delete(thing(X, Y, Type, Details)).
+	forall bel(newConnection(Agent, X, Y)) do delete(newConnection(Agent, X, Y)).
+	forall bel(connectionFromTo(X2, Y2, Agent)) do delete(connectionFromTo(X2, Y2, Agent)).
+	forall bel(commonEnvironmentPercepts(X, Y, Cep)) do delete(commonEnvironmentPercepts(X, Y, Cep)).
+	forall bel(savedCommonEnvironmentPercepts(MyPosition, CEP, Step)) do delete(savedCommonEnvironmentPercepts(MyPosition, CEP, Step)).
+	forall bel(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)) do delete(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)).
+	
+	if bel(taskMaster(TM)) then delete(taskMaster(TM)).
+	if bel(poloidalCircumference(PC)) then delete(poloidalCircumference(PC)).
+	if bel(toroidalCircumference(TC)) then delete(toroidalCircumference(TC)).
+	if bel(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) 
+	then delete(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)).	
+}

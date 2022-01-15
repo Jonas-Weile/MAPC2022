@@ -1,0 +1,6 @@
+use "../../knowledge" as knowledge.
+
+module initCommunication {
+	% Create channel for explorers
+	if a-goal(explore) then subscribe(explore).
+}

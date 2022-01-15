@@ -1,0 +1,122 @@
+use "../../knowledge" as knowledge.
+use "dropTask_OtherAgents" as module.
+
+module taskPlanning_OtherAgents {
+
+	% Update existing task plan
+	if bel(taskPlan(_, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)),
+	   bel(taskMaster(TaskMaster)),
+	   bel(name(MyName)),
+	   bel(step(Step))
+    then {
+		
+		% I delivered a block to the submit agent
+		if not(bel(submitAgent(MyName))),
+		   bel(deliveredBlock(AgentPlan, Connections, BlockInfo))
+		then insert(blockDelivered(BlockInfo)).
+	
+		% Drop task - Here we should manage detaching and clearing as well!
+		if (_).sent!(dropTask(TaskName)) then dropTask_OtherAgents.
+		if not(bel(task(TaskName, _, _, _))) then dropTask_OtherAgents.
+		% if bel(Step > ETA) then dropTask_OtherAgents.
+		
+		% Update taskplan
+		if bel(taskPlanToDo([CurrentToDo|Rest])) then {
+		
+			if not(bel( member(dispenser(_, _, BlockType), [CurrentToDo|Rest]) )),
+			   bel( missingDeliverable(BlockType, Connections) ),
+			   bel( member(goalCell(Xgc, Ygc), [CurrentToDo|Rest]))
+			then {
+				
+				% Try to correct taskplan - find closest dispenser and go get the missing deliverable
+				if bel(
+					(
+					   closestBlockOrDispenserInVision(Xr, Yr, BlockType, _), 
+					   distanceBetweenPoints_Manhattan(0, 0, Xr, Yr, ShortestDist)
+					)
+					;
+					closestDispenserToGoal(goalCell(Xgc, Ygc), BlockType, Dispenser, ShortestDist)
+				)
+				then {					   
+					if bel(Step + ShortestDist < ETA),
+					   bel(append([Dispenser], [CurrentToDo|Rest], NewTaskPlanToDo))
+					then
+						delete(taskPlanToDo([CurrentToDo|Rest])) +
+						insert(taskPlanToDo(NewTaskPlanToDo)).
+					
+					if not(bel(Step + ShortestDist < ETA)),
+					   bel(taskToChannel(TaskMaster, TaskName, Channel))
+					then (Channel).send!(dropTask(TaskName)) +
+					     dropTask_OtherAgents.
+				}
+			}
+		
+		
+			if bel(finishedStepInTaskPlan(CurrentToDo, TaskName, BlockType, BlockQty, Connections)) then {    
+				if true then delete(taskPlanToDo([CurrentToDo|Rest])).
+			   		
+			   	% Delete all movement plans
+			   	forall bel(waypointsToGoal(Goal, Waypoints))
+				do delete(waypointsToGoal(Goal, Waypoints)).
+				forall bel(actionPlan(Plan))
+				do delete(actionPlan(Plan)).
+				
+				% Clear all information about recently visited fields
+				forall bel(visited(X, Y, Step))
+				do delete(visited(X, Y, Step)).
+			   		
+		   		% Adopt next task or finish my part of the task
+		   		if bel(length(Rest, NrOfRemainingToDos)) then {
+		   			if bel(NrOfRemainingToDos >= 1) then insert(taskPlanToDo(Rest)).
+			   			
+
+		   			if bel(NrOfRemainingToDos = 0) then {
+		   					
+		   				if bel(submitAgent(MyName)),
+		   				   bel(taskToChannel(TaskMaster, TaskName, Channel))
+		   				then (Channel).send!(taskSubmitted(TaskName)).
+		   				
+		   				if true then dropTask_OtherAgents.
+		   			}		
+		   		}		   		
+			}
+		}   		
+	}	
+
+
+	% If I don't have a task, then answer information requests
+	if not(bel(taskPlan(_, _, _, _, _, _, _))) then {
+		
+		% Answer requests
+		forall (TaskMaster).sent?(resourceRequest(Task, GoalCells)) do {
+			if bel(taskMaster(TaskMaster)), 
+			   bel(agentOffset(TaskMaster, Xoffset, Yoffset)), 
+			   bel(addOffset_list(Xoffset, Yoffset, GoalCells, GoalCells_Offset)), 
+			   bel(getResourcesForTask(Task, GoalCells_Offset, Resources), Resources \= [])
+			then (TaskMaster).send!(resourceReply(Task, Resources)).
+		}
+		
+		% Receive taskplan
+		listall TaskPlans 
+			<- (TaskMaster).sent!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) do {
+		
+			% Ensure we only received 1 task plan
+			if bel(member([Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections, TaskMaster], TaskPlans)) then {								
+				if bel(taskMaster(TaskMaster)) then {
+					if bel(taskToChannel(TaskMaster, TaskName, Channel)) 
+					then insert(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) + 
+						 insert(taskPlanToDo(AgentPlan)) +
+						 subscribe(Channel).
+					
+					% Record the submit agent
+					if bel(member((AgentName, _, _, _, 1), Connections)) 
+					then insert(submitAgent(AgentName)).
+					
+					% Clear all information about recently visited fields
+					forall bel(visited(X, Y, Step))
+					do delete(visited(X, Y, Step)).
+				}
+			}
+		}
+	}
+}

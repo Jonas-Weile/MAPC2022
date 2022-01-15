@@ -1,0 +1,89 @@
+use "..\mapcActions" as actionspec.
+use "..\knowledge.pl" as knowledge.
+
+order = linearall.
+
+module movementModule {
+
+	% If clearing, then clear
+	if bel(clearing(ClearXr, ClearYr))
+	then clear(ClearXr, ClearYr) + exit-module.
+			
+	
+	% Try to move towards the goal
+	if bel(goTo(XGoalr, YGoalr)),
+	   bel(relativeToAbsolutePositionOfCoordinates(XGoalr, YGoalr, XGoal, YGoal))
+	then {			
+	
+		% The goal is specified everytime the module is called
+		if true then delete(goTo(XGoalr, YGoalr)).
+	
+		% Check and update any waypoints
+		if bel(waypointsToGoal((XGoal, YGoal), [(X, Y)|Rest])),
+		   bel(myPosition(X, Y))
+		then {
+			if true then delete(waypointsToGoal((XGoal, YGoal), [(X, Y)|Rest])).
+		    if not(bel(Rest = [])) then insert(waypointsToGoal((XGoal, YGoal), Rest)).
+		}
+		
+		% Delete any old waypoints
+		forall bel(waypointsToGoal((OtherXGoal, OtherYGoal), Waypoints)),
+		       bel(XGoal \= OtherXGoal, YGoal \= OtherYGoal)
+		do delete(waypointsToGoal((OtherXGoal, OtherYGoal), Waypoints)).
+		
+		
+		% If we have a plan, try to execute it
+		if bel(actionPlan([NextAction|_]))
+		then {
+			if bel(NextAction = move(Dir)), not(bel(blocked(Dir)))
+			then move(Dir) + print("Following my plan - moving") + exit-module.
+			
+			if bel(NextAction = rotate(R)), not(bel(blockedRotation(R, 90)))             
+			then rotate(R) + print("Following my plan - rotating") + exit-module.
+		}
+		
+		% If the plan was possible, we would not reach this state.
+		if bel(actionPlan(Plan)) then delete(actionPlan(Plan)).
+			
+		% Find movement
+		if bel( 
+				( waypointsToGoal((XGoal, YGoal), [(X, Y)|_]), relativePositionOfCoordinatesFromMe(X, Y, Xr, Yr) )
+			    ; 
+			    (Xr = XGoalr, Yr = YGoalr)
+			)
+		then {	
+						
+			if bel(goToAction(Xr, Yr, Action))
+			then {
+			
+				% Rotations should always be useful - and possible
+				if bel(Action = rotate(R)) then rotate(R) + exit-module.
+			
+				% If the move is a 'good' move, then perform it.
+				if bel(Action = move(Dir)) then move(Dir) + exit-module.
+			}
+		}
+			
+						
+		if bel(astarNoClear(XGoalr, YGoalr, AbsolutePath, ActionPlan)),
+		   bel(ActionPlan = [FirstAction|_])
+		then {			
+		    if bel(findWaypoints(AbsolutePath, Waypoints))
+			then insert(waypointsToGoal((XGoal, YGoal), Waypoints)).
+			
+			if true then insert(actionPlan(ActionPlan)).	
+			if bel(FirstAction = move(Dir)) then move(Dir) + exit-module.
+			if bel(FirstAction = rotate(R)) then rotate(R) + exit-module.
+		}
+			
+			
+		% We have to clear..		 
+		if bel(clearGuard),
+		   bel(astarClear(XGoalr, YGoalr, _, Actions)),
+		   bel(member(clear(ClearX, ClearY), Actions))
+		then clear(ClearX, ClearY) + insert(clearing(ClearX, ClearY)) + print("Clearing necessary") + exit-module.
+	}
+	
+	% Move randomly
+	if bel(randomDirection(D)) then move(D).
+}

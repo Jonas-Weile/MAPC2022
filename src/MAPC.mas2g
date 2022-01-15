@@ -1,0 +1,11 @@
+use "..\..\massim-2022-dev\massim-2022-1.0\eismassim\eismassim-4.4-jar-with-dependencies.jar" as environment.
+
+define universal as agent {
+	use mapcInit as init.
+	use mapcMain as main.
+	use mapcEvent as event.
+} 
+
+launchpolicy{
+	when * launch universal with name = *.
+}

@@ -1,0 +1,46 @@
+use "../../knowledge" as knowledge.
+
+module receiveConnectionUpdates {
+
+	if bel(name(MyName)), 
+	   bel(connectedAgentsOrdered(ConnectedAgents)),
+	   bel(last(ConnectedAgents, MyName))
+	then {		
+	
+		listall ConnectionUpdates <- (_).sent!(connectionUpdate(Update, _)) do {   
+		
+		   if bel(savedConnectionUpdates(SavedUpdates), append(SavedUpdates, ConnectionUpdates, AllUpdates)), 
+		      bel(length(AllUpdates, Len)) 
+		    then {		    			
+		   				   		
+			    % Find new connections
+		     	if bel(teamSize(Len)),
+		     	   bel(findNewConnections(AllUpdates, NewConnections, NewDimensions))
+		     	then {
+		     	
+		     		if bel(NewDimensions \= [])
+		     		then all.send!(newDimensions(NewDimensions)) +
+		     			 print(NewDimensions).
+		     			
+		     			     	
+		     		if bel(NewConnections \= []) 
+		     		then {
+		     		
+			     		% Inform all connected agents
+			     	 	if bel(shareCommonKnowledge(AllUpdates, NewConnections, NewKnowledge)),
+			     	 	    bel(findCommonTaskMaster(AllUpdates, NewConnections, NewTaskMasterList))
+			     	 	then {
+			     	 		forall bel(member(Agent, ConnectedAgents))
+			   				do (Agent).send!(newConnections(NewConnections, NewKnowledge, NewTaskMasterList)).
+			     	 	}
+					}
+				}
+				
+				% If we don't have all updates, save the ones we just receieved
+				if not(bel(teamSize(Len))) then {
+					forall bel(member(Update, ConnectionUpdates)) do insert(connectionUpdate(Update)).
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,29 @@
+use "../../knowledge" as knowledge.
+
+module sendConnectionUpdates {
+	
+	if bel(step(PrevStep), CurrentStep is PrevStep + 1, name(MyName)) then {
+	
+	%%% ONLY SEND CONNECTIONS ON EVERY X STEPS
+		if bel(CurrentStep > 0), 
+		   bel(0 is mod(CurrentStep, 10))
+		then {
+		
+			% SEND CONNECTION UPDATE
+			if bel(newConnectionsOrdered(NewConnections), oldConnectionsOrdered(OldConnections)),
+			   bel(shareableKnowledge(Knowledge), taskMastersOrdered(TaskMasters)) 
+			then (explore).send!(connectionUpdate((MyName, NewConnections, OldConnections, Knowledge, TaskMasters), CurrentStep)).
+			  
+			%% Remove all 'new' connections and from list
+			forall bel(newConnection(AgentName, OffsetX, OffsetY)) 
+			do delete(newConnection(AgentName, OffsetX, OffsetY)).
+	    }
+	
+	%%% DELETE ALL SAVED CONNECTION-UPDATES ON (X - 1)TH STEP
+	if bel(CurrentStep > 0, 0 is mod((CurrentStep + 1), 10)) then {
+	   	forall bel(connectionUpdate(Update))
+	   		do delete(connectionUpdate(Update)).
+	}
+	
+	}
+}
