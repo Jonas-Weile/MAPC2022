@@ -1,4 +1,5 @@
-use "..\..\massim-2022-dev\massim-2022-1.0\eismassim\eismassim-4.4-jar-with-dependencies.jar" as environment.
+use "..\resources\eismassim\eismassim-4.4-jar-with-dependencies.jar" as environment 
+	with configFile="..\resources\eismassim\eismassimconfig.json".
 
 define universal as agent {
 	use mapcInit as init.
