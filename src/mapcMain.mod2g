@@ -32,8 +32,8 @@ module mapcMain {
 				% If we have blocks of another type attached - drop 'em (If they will not be in the way)
 				if bel(attachedToMe(Xr, Yr, block, WrongBlockType), WrongBlockType \= BlockType),
 				   bel(translate(Dir, 0, 0, Xr, Yr)),
-				   not(bel(goal(Xr, Yr))),
-				   not(bel(translate(_, Xr, Yr, AnyX, AnyY), goal(AnyX, AnyY)))
+				   not(bel(goalZone(Xr, Yr))),
+				   not(bel(translate(_, Xr, Yr, AnyX, AnyY), goalZone(AnyX, AnyY)))
 				then detach(Dir).
 				
 				if bel(closestBlockOrDispenserInVision(Xr, Yr, _, BlockType)) then {
@@ -66,14 +66,14 @@ module mapcMain {
 				
 					if bel(attachedToMe(XBlock, YBlock, block, WrongBlockType), WrongBlockType \= BlockType),
 					   bel(translate(Dir, 0, 0, XBlock, YBlock)),
-					   not(bel(goal( XBlock, YBlock))),
-				       not(bel(translate(_,  XBlock, YBlock, AnyX, AnyY), goal(AnyX, AnyY)))
+					   not(bel(goalZone( XBlock, YBlock))),
+				       not(bel(translate(_,  XBlock, YBlock, AnyX, AnyY), goalZone(AnyX, AnyY)))
 					then detach(Dir).
 					 
 					if bel(attachedToMe(XBlock, YBlock, block, BlockType)),
 					   bel(translate(Dir, 0, 0, XBlock, YBlock)),
-					   not(bel(goal(XBlock, YBlock))),
-				       not(bel(translate(_, XBlock, YBlock, AnyX, AnyY), goal(AnyX, AnyY)))
+					   not(bel(goalZone(XBlock, YBlock))),
+				       not(bel(translate(_, XBlock, YBlock, AnyX, AnyY), goalZone(AnyX, AnyY)))
 					 then detach(Dir).
 				}
 					

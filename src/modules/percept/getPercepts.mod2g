@@ -1,69 +1,18 @@
 use "../../knowledge" as knowledge.
 
 module getPercepts {
-	% Perceive step
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE STEP %%%%%%%%%%%%%%%%%%%%
 	if percept(step(S)), not(bel(step(S)))
 		then insert(step(S)).
 	if bel(step(S)), not(percept(step(S)))
 		then delete(step(S)).
 	
-	% Perceive score
+	
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE SCORE %%%%%%%%%%%%%%%%%%%%
 	if percept(score(S)), not(bel(score(S)))
 		then insert(score(S)).
 	if bel(score(S)), not(percept(score(S)))
 		then delete(score(S)).
-	
-	% Percieve energy
-	if bel(energy(OldLevel)), 
-	   percept(energy(NewLevel))
-	  then {
-		if true then delete(energy(OldLevel)) + insert(energy(NewLevel)).
-		if bel(OldLevel > NewLevel) then insert(completedClearAction(OldLevel)).
-	}	
-		
-	
-	% Perceive if agent is Disabled 
-	if percept(disabled(D)), not(bel(disabled(D)))
-		then insert(disabled(D)).
-	if bel(disabled(D)), not(percept(disabled(D)))
-		then delete(disabled(D)).
-	
-	% Perceive tasks
-	forall percept(task(Task, Deadline, Reward, Requirements)), not(bel(task(Task, Deadline, Reward, Requirements)))
-		do insert(task(Task, Deadline, Reward, Requirements)).
-	forall bel(task(Task, Deadline, Reward, Requirements)), not(percept(task(Task, Deadline, Reward, Requirements))) 
-		do delete(task(Task, Deadline, Reward, Requirements)).
-			
-
-			
-	
-	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE THINGS %%%%%%%%%%%%%%%%%%%%%%%
-	forall percept(thing(Xr, Yr, Type, Details), not((Xr = 0, Yr = 0, Type = entity))), 
-		   not(bel(thing(Xr, Yr, Type, Details)))
-		do insert(thing(Xr, Yr, Type, Details)).	
-	 	
-	forall bel(thing(Xr, Yr, Type, Details)), 
-		   not(percept((thing(Xr, Yr, Type, Details))))
-		do delete(thing(Xr, Yr, Type, Details)).
-		
-		
-	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE TERRAIN %%%%%%%%%%%%%%%%%%%%%%
-	forall percept(attached(Xr, Yr)), not(bel(attached(Xr, Yr))) 
-		do insert(attached(Xr, Yr)).
-	forall bel(attached(Xr, Yr)), not(percept(attached(Xr, Yr))) 
-		do delete(attached(Xr, Yr)).
-	
-	% Perceive obstacles
-	forall percept(obstacle(Xr, Yr)), not(bel(obstacle(Xr, Yr))) 
-		do insert(obstacle(Xr, Yr)).
-	forall bel(obstacle(Xr, Yr)), not(percept(obstacle(Xr, Yr))) 
-		do delete(obstacle(Xr, Yr)).
-		
-	% Perceive goals
-	forall percept(goal(Xr, Yr)), not(bel(goal(Xr, Yr))) 
-		do insert(goal(Xr, Yr)).
-	forall bel(goal(Xr, Yr)), not(percept(goal(Xr, Yr))) 
-		do delete(goal(Xr, Yr)).
 		
 		
 	%%%%%%%%%%%%%%%%%%%% PERCEIVE LAST ACTION %%%%%%%%%%%%%%%%%%%%
@@ -81,4 +30,82 @@ module getPercepts {
 		then delete(lastActionParams(P)).
 	if percept(lastActionParams(P))
 		then insert(lastActionParams(P)).	
+
+	
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE ENERGY %%%%%%%%%%%%%%%%%%%%
+	if bel(energy(OldLevel)), percept(energy(NewLevel))
+	  then {
+		if true then delete(energy(OldLevel)) + insert(energy(NewLevel)).
+		if bel(OldLevel > NewLevel) then insert(completedClearAction(OldLevel)).
+	}	
+		
+	
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE DEACTIVATION %%%%%%%%%%%%%%%%%%%%
+	if percept(deactivated(D)), not(bel(deactivated(D)))
+		then insert(deactivated(D)).
+	if bel(deactivated(D)), not(percept(deactivated(D)))
+		then delete(deactivated(D)).
+	
+	
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE ROLE %%%%%%%%%%%%%%%%%%%%
+	if percept(role(R)), not(bel(role(R)))
+		then insert(role(R)).
+	if bel(role(R)), not(percept(role(R)))
+		then delete(role(R)).
+	
+		
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE THINGS %%%%%%%%%%%%%%%%%%%%%%%
+	forall percept(thing(Xr, Yr, Type, Details), not((Xr = 0, Yr = 0, Type = entity))), 
+		   not(bel(thing(Xr, Yr, Type, Details)))
+		do insert(thing(Xr, Yr, Type, Details)).	
+	 	
+	forall bel(thing(Xr, Yr, Type, Details)), 
+		   not(percept((thing(Xr, Yr, Type, Details))))
+		do delete(thing(Xr, Yr, Type, Details)).
+		
+		
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE ZONES %%%%%%%%%%%%%%%%%%%%%%
+	forall percept(goalZone(Xr, Yr)), not(bel(goalZone(Xr, Yr)))
+		do insert(goalZone(Xr, Yr)).
+	forall bel(goalZone(Xr, Yr)), not(percept(goalZone(Xr, Yr))) 
+		do delete(goalZone(Xr, Yr)).	
+		
+	forall percept(roleZone(Xr, Yr)), not(bel(roleZone(Xr, Yr)))
+		do insert(roleZone(Xr, Yr)).
+	forall bel(roleZone(Xr, Yr)), not(percept(roleZone(Xr, Yr))) 
+		do delete(roleZone(Xr, Yr)).	
+		
+		
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE EVENTS %%%%%%%%%%%%%%%%%%%%%%
+	%EXAMINE THE JSON FORMAT FOR THESE! Not clear from the docs.
+		
+		
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE TASKS %%%%%%%%%%%%%%%%%%%%%%
+	forall percept(task(Name, Start, Reward, Requirements)), not(bel(task(Name, Start, Reward, Requirements)))
+		do insert(task(Name, Start, Reward, Requirements)).
+	forall bel(task(Name, Start, Reward, Requirements)), not(percept(task(Name, Start, Reward, Requirements))) 
+		do delete(task(Name, Start, Reward, Requirements)).
+			
+			
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE NORMS %%%%%%%%%%%%%%%%%%%%%%
+	forall percept(norm(Name, Start, Until, Level, Requirements, Punishment)),
+		   not(bel(norm(Name, Start, Until, Level, Requirements, Punishment)))
+		do insert(norm(Name, Start, Until, Level, Requirements, Punishment)).
+	forall bel(norm(Name, Start, Until, Level, Requirements, Punishment)),
+		   not(percept(norm(Name, Start, Until, Level, Requirements, Punishment)))
+		do delete(norm(Name, Start, Until, Level, Requirements, Punishment)).
+		
+		
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE VIOLATIONS %%%%%%%%%%%%%%%%%%%%%%	
+	forall percept(violation(V)), not(bel(violation(V)))
+		do insert(violation(V)).
+	forall bel(violation(V)), not(percept(violation(V)))
+		do delete(violation(V)).
+	
+		
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE ATTACHMENTS %%%%%%%%%%%%%%%%%%%%%%
+	forall percept(attached(Xr, Yr)), not(bel(attached(Xr, Yr))) 
+		do insert(attached(Xr, Yr)).
+	forall bel(attached(Xr, Yr)), not(percept(attached(Xr, Yr))) 
+		do delete(attached(Xr, Yr)).	
 }

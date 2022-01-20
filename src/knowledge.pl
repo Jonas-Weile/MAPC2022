@@ -2,12 +2,12 @@
  
  	%%%%%% COMMON %%%%%%
 	name/1, team/1, teamSize/1, steps/1, vision/1, clearEnergyCost/1, maxEnergy/1, 
-	clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1,
+	clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1, role/6,
 	
 	% Environment percepts
 	step/1, score/1, lastAction/1, lastActionResult/1, lastActionParams/1,
-	energy/1, disabled/1, task/4, attached/2, obstacle/2,
-	goal/2, thing/4, accepted/1,
+	energy/1, deactivated/1, task/4, attached/2, obstacle/2,
+	thing/4, accepted/1, role/1, goalZone/2, roleZone/2, norm/6, violation/1,
 	
 	% Things
 	taskboard/2, dispenser/3,
@@ -365,7 +365,7 @@ safeScore(D, VSum) :-
 	team(Team),
 	translate(D, 0, 0, X, Y),
 	findall(Vd, 
-		((thing(Xt, Yt, entity, Team) ; goal(Xt, Yt) ; thing(Xt, Yt, dispenser, _)), 
+		((thing(Xt, Yt, entity, Team) ; goalZone(Xt, Yt) ; thing(Xt, Yt, dispenser, _)), 
 		distanceBetweenPoints_Manhattan(X, Y, Xt, Yt, Vd), Vd > 0),
 		VScoreList),
 	listSum(VScoreList, VSum, _).
@@ -590,7 +590,7 @@ identifyCommonEnvironmentPercepts(X, Y, Cep) :-
 		   (  
 		      thing(Xe, Ye, Type, _);
 		      (obstacle(Xe, Ye), Type = obstacle);
-		      (goal(Xe, Ye), Type = goal)	      
+		      (goalZone(Xe, Ye), Type = goal)	      
 		   ),
 		   % Exclude the agent itself
 		   (Xe, Ye) \= (X, Y),

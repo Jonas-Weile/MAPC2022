@@ -4,10 +4,6 @@ module getInitialPercepts {
 	% Total number of sim steps
 	if percept(steps(X)) then
 		insert(steps(X)).
-		
-	% Expected agent vision range
-	if percept(vision(X)) then
-		insert(vision(X)).
 	
 	% Agent name
 	if percept(name(X)) then
@@ -25,6 +21,10 @@ module getInitialPercepts {
 	if percept(energy(E)) then 
 		insert(energy(E)) +
 		insert(maxEnergy(E)).
+		
+	% Roles
+	forall percept(role(Name, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)) do
+		insert(role(Name, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)).
 		
 	% Set initial clear-beliefs
 	if true then 

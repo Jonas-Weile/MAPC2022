@@ -33,6 +33,7 @@ module updateBeliefState {
 		if bel(lastAction(accept), P = [Task]) then	insert(accepted(Task)).
 		if bel(lastAction(submit), P = [Task]) then	insert(submitted(Task)).
 		
+		
 		% Connecting a block
 		if bel(lastAction(connect), P = [Agent, X, Y]),
 		   bel(atom_number(X, X2)),
@@ -165,7 +166,7 @@ module updateBeliefState {
 	
 	
 	%%%%%%%%% GOALCELLS - insert beliefs about goals as permanent goalCells %%%%%%%%%
-	forall bel(goal(Xr, Yr)), 
+	forall bel(goalZone(Xr, Yr)), 
 	       bel(relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y)),
 	       not(bel(goalCell(X, Y))) 
 	do {
@@ -176,8 +177,8 @@ module updateBeliefState {
 	}
 	
 	
-	%%%%%%%%% DISABLED - If the agent was disabled, clear all attachements %%%%%%%%%
-	if bel(disabled(true)) then {
+	%%%%%%%%% DEACTIVATED - If the agent was deactivated, clear all attachements %%%%%%%%%
+	if bel(deactivated(true)) then {
 		forall bel(attachedToMe(X, Y))
 			do delete(attachedToMe(X, Y)).
 			

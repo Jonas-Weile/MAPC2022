@@ -15,13 +15,16 @@ module resetAgent {
 	if bel(myPosition(X, Y)) then delete(myPosition(X, Y)).
 		
 	% Delete all beliefs
+	forall bel(role(R)) do delete(role(R)).
 	forall bel(share(X)) do delete(share(X)).
-	forall bel(goal(X, Y)) do delete(goal(X, Y)).
 	forall bel(accepted(X)) do delete(accepted(X)).
 	forall bel(taskPlan(TP)) do delete(taskPlan(TP)).
 	forall bel(submitted(X)) do delete(submitted(X)).
+	forall bel(violation(V)) do delete(violation(V)).
 	forall bel(deleteTask(T)) do delete(deleteTask(T)).
 	forall bel(obstacle(X, Y)) do delete(obstacle(X, Y)).
+	forall bel(goalZone(X, Y)) do delete(goalZone(X, Y)).
+	forall bel(roleZone(X, Y)) do delete(roleZone(X, Y)).
 	forall bel(goalCell(X, Y)) do delete(goalCell(X, Y)).
 	forall bel(taskboard(X, Y)) do delete(taskboard(X, Y)).
 	forall bel(taskSubmitted(T)) do delete(taskSubmitted(T)).
@@ -36,9 +39,11 @@ module resetAgent {
 	forall bel(resourceRequest(T, R)) do delete(resourceRequest(T, R)).
 	forall bel(occupied(Task, Thing)) do delete(occupied(Task, Thing)).
 	forall bel(savedResourceReply(R)) do delete(savedResourceReply(R)).
+	forall bel(norm(N, S, U, L, R, P)) do delete(norm(N, S, U, L, R, P)).	
 	forall bel(dispenser(X, Y, Details)) do delete(dispenser(X, Y, Details)).
 	forall bel(agentOffset(Agent, X, Y)) do delete(agentOffset(Agent, X, Y)).
 	forall bel(connectionUpdate(Update)) do delete(connectionUpdate(Update)).
+	forall bel(role(N, V, A, S, CC, CMD)) do delete(role(N, V, A, S, CC, CMD)).
 	forall bel(resourceRequestSent(T, R)) do delete(resourceRequestSent(T, R)).
 	forall bel(thing(X, Y, Type, Details)) do delete(thing(X, Y, Type, Details)).
 	forall bel(newConnection(Agent, X, Y)) do delete(newConnection(Agent, X, Y)).
