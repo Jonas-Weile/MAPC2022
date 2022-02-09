@@ -54,7 +54,7 @@ module getPercepts {
 		then delete(role(R)).
 	
 		
-	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE THINGS %%%%%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE THINGS %%%%%%%%%%%%%%%%%%%%%%% markers will be set here. 
 	forall percept(thing(Xr, Yr, Type, Details), not((Xr = 0, Yr = 0, Type = entity))), 
 		   not(bel(thing(Xr, Yr, Type, Details)))
 		do insert(thing(Xr, Yr, Type, Details)).	

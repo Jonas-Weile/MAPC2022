@@ -105,7 +105,7 @@ taskToChannel(TaskMaster, TaskName, ChannelName) :-
 %%%%%%%%%%%%% RLATIVE NAVIGATION %%%%%%%%%%%%%%%%%%
 % Block in sight
 blockInView(Xr, Yr, Type) :-
-	thing(Xr, Yr, block, Type),
+	thing(Xr, Yr, block, Type), %% Type means BlockType !!!!! We might mean detail ?
 	not(attached(Xr, Yr)).
 	
 dispenserInView(Xr, Yr, Type) :-
@@ -184,6 +184,7 @@ blockedAfterRotation(R, D) :-
 impassable(X, Y) :- obstacle(X, Y).
 impassable(X, Y) :- thing(X, Y, entity, _).
 impassable(X, Y) :- thing(X, Y, block, BlockType), not(attachedToMe(X, Y, block, BlockType)).
+
 
 
 % Infer needed rotation to point attachment spot (Xa, Ya) towards (Xt, Yt)
@@ -347,6 +348,9 @@ validDirectionAfterRotation(D) :-
 	blockedForMyAttachments(D),
 	not(blockedRotation(R, 90)),
 	not(blockedAfterRotation(R, D)).
+	
+anyDirection(D) :-
+	member(D, [n, s, e, w]).
 
 % Heuristic
 exploreScore(D, VSum) :-
@@ -370,19 +374,32 @@ safeScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 
-
+% clear event
 clearScore(D, Score) :-
 	translate(D, 0, 0, Xr, Yr),
 	epicenter(Xe, Ye) ->
 		(distMan(Xr, Yr, Xe, Ye, Dist), Score is 10*(Dist+1));
 		(Score = 0).
 	
+
 	
 
 % safeExploreDirections (prioritize avoiding disrupting agents working on turning in tasks
 safeExploreDirections(Direction) :-
 	findall((Score, D),
 		 (validDirection(D), exploreScore(D, EScore), safeScore(D, SScore), clearScore(D, CScore),
+	    		Score is EScore + SScore + CScore),
+	    	 DirectionValueList),
+	reverseSort(DirectionValueList, DirectionValueListSorted),
+	DirectionValueListSorted = [(MaxScore, _)|_],
+	step(N), Seed is N mod(24), enumDirList(DL, Seed),
+	member(Direction, DL), 	member((V, Direction), DirectionValueListSorted), V = MaxScore.
+	
+
+% safeExploreDirections (prioritize avoiding disrupting agents working on turning in tasks
+safeExploreDirectionsBIS(Direction) :-
+	findall((Score, D),
+		 (anyDirection(D), exploreScore(D, EScore), safeScore(D, SScore), clearScore(D, CScore),
 	    		Score is EScore + SScore + CScore),
 	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),

@@ -207,7 +207,13 @@ module mapcMain {
 	
 	% Keep on exploring
 	if goal(explore) then {
-		if bel(safeExploreDirections(D)) then move(D).
+		
+		
+		
+		if bel(safeExploreDirectionsBIS(D)) then {
+			if bel(direction(Xr,Yr,D)), bel(obstacle(Xr,Yr)) then clear(Xr,Yr).
+			if true then move(D).
+		}
 	}
 	
 	% Skip - avoid no_action
