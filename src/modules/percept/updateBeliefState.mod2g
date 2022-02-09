@@ -1,9 +1,8 @@
 use "../../knowledge" as knowledge.
 
 module updateBeliefState {
-	
-	
-	%%%%%%%%% ACTIONS - Update beliefs according to the result of last action %%%%%%%%%
+
+	%%%%%%%%% Update the belief state according to the result of last action %%%%%%%%%
 	if bel(actionPlan(Plan)),
 	   not(bel(lastActionResult(success)))
 	then delete(actionPlan(Plan)).
@@ -30,6 +29,7 @@ module updateBeliefState {
 			insert(visited(XFromMyOrigin, YFromMyOrigin, Step)).
 		}		
 		
+		% accepting or submitting a task
 		if bel(lastAction(accept), P = [Task]) then	insert(accepted(Task)).
 		if bel(lastAction(submit), P = [Task]) then	insert(submitted(Task)).
 		
@@ -44,12 +44,10 @@ module updateBeliefState {
 		 	if bel(connectionToInfo(ToX, ToY)) 
 		 	then insert(connectionFromTo(X2, Y2, ToX, ToY, Agent)) +
 		 	     delete(connectionToInfo(ToX, ToY)).
-		 	
-		 	
 		}
 		
 		
-		% disconnection
+		% disconnecting a block
 		if bel(lastAction(disconnect), P = [X1, Y1, _, _]),
 		   bel(atom_number(X1, X1_num)),
 		   bel(atom_number(Y1, Y1_num)),
@@ -93,12 +91,11 @@ module updateBeliefState {
 		}
 	
 	
-		% Clear: Update obstacles
+		% Clear
 		if percept(lastAction(clear)),
 		   bel(P = [AtomX, AtomY]), 
 		   bel(atom_number(AtomX, X), atom_number(AtomY, Y)) 
 		then {
-		
 			if bel(clearStepsCounter(Steps), IncSteps is Steps +1) 
 			then delete(clearStepsCounter(Steps)) + insert(clearStepsCounter(IncSteps)).
 			
@@ -126,55 +123,42 @@ module updateBeliefState {
 	       		(Type = block ; Type = entity),
 	       		translate(_, Xr, Yr, Xt, Yt)
        	   ))
-	do insert(attachedToMe(Xr, Yr)) + print("Attached from percept", Xr, Yr).
+		do insert(attachedToMe(Xr, Yr)) + print("Attached from percept", Xr, Yr).
 				
 	% Remove attached		
 	forall bel(attachedToMe(Xr, Yr)), not(bel(attached(Xr, Yr))) 
 		do delete(attachedToMe(Xr, Yr)).
 	
 	
-	%%%%%%%%% Update beliefs about connected blocks! %%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%% Update beliefs about connected blocks %%%%%%%%%%%%%%%%%%%%
 	forall bel(connectionToInfo(ToX, ToY))
-	do     delete(connectionToInfo(ToX, ToY)).
+		do delete(connectionToInfo(ToX, ToY)).
 	
-	forall bel(connectionFromTo(X, Y, Agent)),
-	       not(bel(thing(X, Y, block, _)))
-	do delete(connectionFromTo(X, Y, Agent)).
+	forall bel(connectionFromTo(X, Y, Agent), not(thing(X, Y, block, _)))
+		do delete(connectionFromTo(X, Y, Agent)).
 	
-	forall bel(connectionFromTo(X, Y, ToX, ToY, Agent)),
-	       not(bel(thing(X, Y, block, _)))
-	do delete(connectionFromTo(X, Y, ToX, ToY, Agent)).
+	forall bel(connectionFromTo(X, Y, ToX, ToY, Agent), not(thing(X, Y, block, _)))
+		do delete(connectionFromTo(X, Y, ToX, ToY, Agent)).
 	
 	
-	%%%%%%%%% THINGS - store/remove things - Taskboards and dispensers are permanent %%%%%%%%%
-	forall bel(thing(Xr, Yr, Type, Details)), 
+	%%%%%%%%% Taskboards and dispensers are permanent %%%%%%%%%
+	forall bel(thing(Xr, Yr, Type, Details), (Type = taskboard ; Type = dispenser)), 
 	       bel(relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y)) do {
-	 	if bel(Type = taskboard,  not(taskboard(X, Y))) then {
-	 		if true then insert(taskboard(X, Y)).
-	 		
-	 		% If I'm part of a team, share it
-	 		if bel(agentOffset(_, _, _)) then insert(share(taskboard(X, Y))).
-	 	}
+	       
+	 	if 	 bel(Type = taskboard,  not(taskboard(X, Y))) 
+	 	then insert(taskboard(X, Y)) + insert(share(taskboard(X, Y))).
 	 	
-	 	if bel(Type = dispenser, not(dispenser(X, Y, Details))) then {
-	 		if true then insert(dispenser(X, Y, Details)).
-	 		
-	 		% If I'm part of a team, share it
-	 		if bel(agentOffset(_, _, _)) then insert(share(dispenser(X, Y, Details))).
-	 	}
+	 	if   bel(Type = dispenser, not(dispenser(X, Y, Details))) 
+	 	then insert(dispenser(X, Y, Details)) + insert(share(dispenser(X, Y, Details))).
 	 }
 	
 	
-	%%%%%%%%% GOALCELLS - insert beliefs about goals as permanent goalCells %%%%%%%%%
-	forall bel(goalZone(Xr, Yr)), 
-	       bel(relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y)),
-	       not(bel(goalCell(X, Y))) 
-	do {
-		if true then insert(goalCell(X, Y)).
-		
- 		% If I'm part of a team, share it
- 		if bel(agentOffset(_, _, _)) then insert(share(goalCell(X, Y))).
-	}
+	%%%%%%%%% Zones %%%%%%%%%
+	forall bel(goalZone(Xr, Yr), relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y), not(goalCell(X, Y))) 
+		   do insert(goalCell(X, Y)) + insert(share(goalCell(X, Y))).
+		   
+	forall bel(roleZone(Xr, Yr), relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y), not(roleCell(X, Y))) 
+		   do insert(roleCell(X, Y)) + insert(share(roleCell(X, Y))).
 	
 	
 	%%%%%%%%% DEACTIVATED - If the agent was deactivated, clear all attachements %%%%%%%%%

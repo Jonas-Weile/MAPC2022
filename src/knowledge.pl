@@ -6,14 +6,14 @@
 	
 	% Environment percepts
 	step/1, score/1, lastAction/1, lastActionResult/1, lastActionParams/1,
-	energy/1, deactivated/1, task/4, attached/2, obstacle/2,
+	energy/1, deactivated/1, task/4, attached/2,
 	thing/4, accepted/1, role/1, goalZone/2, roleZone/2, norm/6, violation/1,
 	
 	% Things
 	taskboard/2, dispenser/3,
 	
 	% Internal percepts
-	goalCell/2,
+	goalCell/2, roleCell/2,
 	
 	% myPosition(?X, ?Y) - Current position of agent
 	myPosition/2,
@@ -70,8 +70,11 @@
 	
 	%%%%%%%%%% THESE ARE SIMPLY TO STOP GOAL FROM COMPLAINING %%%%%%%%%
 	translateToMyOrigin_Agent/2, findNC_folder/1, collectListsToSets/0, gcd_helper/0,
-	connectedBlocks_folder/0, rankTask/0, buildAgentPlanFromAssignments/1, relativeToAbsolutePositionOfPoints/0.
-	
+	connectedBlocks_folder/0, rankTask/0, buildAgentPlanFromAssignments/1, relativeToAbsolutePositionOfPoints/0.			
+			
+			
+obstacle(Xr, Yr) :-
+	thing(Xr, Yr, obstacle, _).
 			
  % Convert name to 'random' seed								    
 nameToSeed(Name, Seed) :- 									    

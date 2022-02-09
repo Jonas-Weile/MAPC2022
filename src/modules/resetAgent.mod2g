@@ -22,7 +22,6 @@ module resetAgent {
 	forall bel(submitted(X)) do delete(submitted(X)).
 	forall bel(violation(V)) do delete(violation(V)).
 	forall bel(deleteTask(T)) do delete(deleteTask(T)).
-	forall bel(obstacle(X, Y)) do delete(obstacle(X, Y)).
 	forall bel(goalZone(X, Y)) do delete(goalZone(X, Y)).
 	forall bel(roleZone(X, Y)) do delete(roleZone(X, Y)).
 	forall bel(goalCell(X, Y)) do delete(goalCell(X, Y)).
