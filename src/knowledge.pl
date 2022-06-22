@@ -7,7 +7,8 @@
 	% Environment percepts
 	step/1, score/1, lastAction/1, lastActionResult/1, lastActionParams/1,
 	energy/1, deactivated/1, task/4, attached/2,
-	thing/4, accepted/1, role/1, goalZone/2, roleZone/2, norm/6, violation/1,
+	thing/4, accepted/1, role/1, goalZone/2, roleZone/2, norm/5, violation/1,
+	surveyed/4, surveyed/2, hit/2,
 	
 	% Things
 	taskboard/2, dispenser/3,

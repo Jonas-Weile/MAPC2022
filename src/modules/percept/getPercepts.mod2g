@@ -77,23 +77,36 @@ module getPercepts {
 		
 		
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE EVENTS %%%%%%%%%%%%%%%%%%%%%%
-	%EXAMINE THE JSON FORMAT FOR THESE! Not clear from the docs.
+	forall percept(surveyed("agent", Name, Role, Energy)), not(bel(surveyed("agent", Name, Role, Energy)))
+		do insert(surveyed("agent", Name, Role, Energy)).
+	forall bel(surveyed("agent", Name, Role, Energy)), not(percept(surveyed("agent", Name, Role, Energy)))
+		do delete(surveyed("agent", Name, Role, Energy)).
+		
+	forall percept(surveyed(Target, Distance)), not(bel(surveyed(Target, Distance)))
+		do insert(surveyed(Target, Distance)).
+	forall bel(surveyed(Target, Distance)), not(percept(surveyed(Target, Distance)))
+		do delete(surveyed(Target, Distance)).
+		
+	forall percept(hit(x, y)), not(bel(hit(x, y)))
+		do insert(hit(x, y)).
+	forall bel(hit(x, y)), not(percept(hit(x, y)))
+		do delete(hit(x, y)).
 		
 		
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE TASKS %%%%%%%%%%%%%%%%%%%%%%
-	forall percept(task(Name, Start, Reward, Requirements)), not(bel(task(Name, Start, Reward, Requirements)))
-		do insert(task(Name, Start, Reward, Requirements)).
-	forall bel(task(Name, Start, Reward, Requirements)), not(percept(task(Name, Start, Reward, Requirements))) 
-		do delete(task(Name, Start, Reward, Requirements)).
+	forall percept(task(Name, Deadline, Reward, Requirements)), not(bel(task(Name, Deadline, Reward, Requirements)))
+		do insert(task(Name, Deadline, Reward, Requirements)).
+	forall bel(task(Name, Deadline, Reward, Requirements)), not(percept(task(Name, Deadline, Reward, Requirements))) 
+		do delete(task(Name, Deadline, Reward, Requirements)).
 			
 			
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE NORMS %%%%%%%%%%%%%%%%%%%%%%
-	forall percept(norm(Name, Start, Until, Level, Requirements, Punishment)),
-		   not(bel(norm(Name, Start, Until, Level, Requirements, Punishment)))
-		do insert(norm(Name, Start, Until, Level, Requirements, Punishment)).
-	forall bel(norm(Name, Start, Until, Level, Requirements, Punishment)),
-		   not(percept(norm(Name, Start, Until, Level, Requirements, Punishment)))
-		do delete(norm(Name, Start, Until, Level, Requirements, Punishment)).
+	forall percept(norm(Name, Start, Until, Requirements, Punishment)),
+		   not(bel(norm(Name, Start, Until, Requirements, Punishment)))
+		do insert(norm(Name, Start, Until, Requirements, Punishment)).
+	forall bel(norm(Name, Start, Until, Requirements, Punishment)),
+		   not(percept(norm(Name, Start, Until, Requirements, Punishment)))
+		do delete(norm(Name, Start, Until, Requirements, Punishment)).
 		
 		
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE VIOLATIONS %%%%%%%%%%%%%%%%%%%%%%	

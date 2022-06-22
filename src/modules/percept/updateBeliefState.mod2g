@@ -92,7 +92,7 @@ module updateBeliefState {
 	
 	
 		% Clear
-		if percept(lastAction(clear)),
+		if bel(lastAction(clear)),
 		   bel(P = [AtomX, AtomY]), 
 		   bel(atom_number(AtomX, X), atom_number(AtomY, Y)) 
 		then {

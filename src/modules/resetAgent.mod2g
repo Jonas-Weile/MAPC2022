@@ -38,7 +38,7 @@ module resetAgent {
 	forall bel(resourceRequest(T, R)) do delete(resourceRequest(T, R)).
 	forall bel(occupied(Task, Thing)) do delete(occupied(Task, Thing)).
 	forall bel(savedResourceReply(R)) do delete(savedResourceReply(R)).
-	forall bel(norm(N, S, U, L, R, P)) do delete(norm(N, S, U, L, R, P)).	
+	forall bel(norm(N, S, U, R, P)) do delete(norm(N, S, U, R, P)).	
 	forall bel(dispenser(X, Y, Details)) do delete(dispenser(X, Y, Details)).
 	forall bel(agentOffset(Agent, X, Y)) do delete(agentOffset(Agent, X, Y)).
 	forall bel(connectionUpdate(Update)) do delete(connectionUpdate(Update)).

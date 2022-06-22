@@ -45,6 +45,15 @@ define clear(X, Y) with
 	pre { true }
 	post { true }
 	
+% survey
+define survey(TargetType) with
+	pre { true }
+	post { true }
+	
+define survey(X, Y) with
+	pre { true }
+	post { true }
+
 % accept
 define accept(TaskName) with
 	pre { true }
