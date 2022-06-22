@@ -1,13 +1,13 @@
 {
   "server" : {
     "tournamentMode" : "round-robin",
-    "teamsPerMatch" : 1,
-    "launch" : "key",
+    "teamsPerMatch" : 2,
+    "launch" : "5s",
     "port" : 12300,
     "backlog" : 10000,
     "agentTimeout" : 4000,
     "resultPath" : "results",
-    "logLevel" : "debug",
+    "logLevel" : "normal",
     "logPath" : "logs",
     "replayPath" : "replays",
     "maxPacketLength" : 65536,
@@ -15,16 +15,18 @@
   },
 
   "manual-mode" : [
-    ["GOAL-DTU", "B"],
+    ["A", "B"],
     ["B", "C"],
-    ["GOAL-DTU", "C"]
+    ["A", "C"]
   ],
 
   "match" : [
-    "$(sim/simplified_sim.json)"
+    "$(sim/sim1.json)",
+    "$(sim/sim2.json)"
   ],
 
   "teams" : {
-    "GOAL-DTU" : {"prefix" : "agent", "password" : "ZwYQgr1"}
+    "A" : {"prefix" : "agent", "password" : "1"},
+    "B" : {"prefix" : "agent", "password" : "1"}
   }
 }

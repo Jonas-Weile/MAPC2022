@@ -14,7 +14,7 @@
       "username-prefix": "agentGOAL-DTU",
       "password": "ZwYQgr1",
       "print-iilang": false,
-      "print-json": false,
+      "print-json": true,
       "start-index": 1,
       "count": -1
     }
