@@ -1,5 +1,5 @@
-use "..\mapcActions" as actionspec.
-use "..\knowledge.pl" as knowledge.
+use "../mapcActions" as actionspec.
+use "../knowledge/knowledge.pl" as knowledge.
 
 order = linearall.
 

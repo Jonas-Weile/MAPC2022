@@ -1,4 +1,4 @@
-use "../../knowledge" as knowledge.
+use "../../knowledge/knowledge" as knowledge.
 use "dropTask_OtherAgents" as module.
 
 module taskPlanning_OtherAgents {

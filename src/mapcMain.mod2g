@@ -1,4 +1,4 @@
-use "knowledge" as knowledge.
+use "knowledge/knowledge" as knowledge.
 use "modules/movementModule".
 use mapcActions.
 
@@ -11,18 +11,12 @@ module mapcMain {
 	
 	if bel(name(MyName)),
 	   bel(taskMaster(MyName))
-	then {
-		if not(percept(goal(_, _))), 
-		   not(percept(thing(_, _, dispenser, _))), 
-		   not(percept(thing(_, _, taskboard, _)))
-		then skip.
-	}
+	then skip.
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TASKS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 	if bel(name(MyName)),
 	   bel(taskPlan(_, TaskName, _, _, BlockType, BlockQty, Connections))
 	then {		
-		
 		if bel(taskPlanToDo([CurrentToDo|_])) then {
 		
 			% Our task is to attach to a block
@@ -56,37 +50,7 @@ module mapcMain {
 				if true
 				then insert(goTo(Xdr, Ydr)) + movementModule. 
 			}
-			
-			
-			% Our job is to accept the task
-			if bel(CurrentToDo = taskboard(Xt, Yt)), 
-			   bel(relativePositionOfCoordinatesFromMe(Xt, Yt, Xtr, Ytr)) then {	
-				% If I have too many attachments, drop one.
-				if bel(excessBlock(BlockQty)) then {
-				
-					if bel(attachedToMe(XBlock, YBlock, block, WrongBlockType), WrongBlockType \= BlockType),
-					   bel(translate(Dir, 0, 0, XBlock, YBlock)),
-					   not(bel(goalZone( XBlock, YBlock))),
-				       not(bel(translate(_,  XBlock, YBlock, AnyX, AnyY), goalZone(AnyX, AnyY)))
-					then detach(Dir).
-					 
-					if bel(attachedToMe(XBlock, YBlock, block, BlockType)),
-					   bel(translate(Dir, 0, 0, XBlock, YBlock)),
-					   not(bel(goalZone(XBlock, YBlock))),
-				       not(bel(translate(_, XBlock, YBlock, AnyX, AnyY), goalZone(AnyX, AnyY)))
-					 then detach(Dir).
-				}
 					
-				% If we are within reach of the taskboard, accept the task
-				if bel(distanceBetweenPoints_Manhattan(0, 0, Xtr, Ytr, Dist)),
-				   bel(Dist =< 2)
-				then accept(TaskName).
-				
-				% If we are not within reach, approach the taskboard
-				if true
-				then insert(goTo(Xtr, Ytr)) + movementModule. 
-			}
-			
 			
 			% Our Job is to go to the goalzone
 			if bel(CurrentToDo = goalCell(Xgc, Ygc)), 

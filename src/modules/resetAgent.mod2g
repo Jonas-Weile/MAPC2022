@@ -1,4 +1,4 @@
-use "..\knowledge.pl" as knowledge.
+use "../knowledge/knowledge.pl" as knowledge.
 
 
 module resetAgent {
@@ -15,7 +15,7 @@ module resetAgent {
 	if bel(myPosition(X, Y)) then delete(myPosition(X, Y)).
 		
 	% Delete all beliefs
-	forall bel(role(R)) do delete(role(R)).
+	forall bel(myRole(R)) do delete(myRole(R)).
 	forall bel(share(X)) do delete(share(X)).
 	forall bel(accepted(X)) do delete(accepted(X)).
 	forall bel(taskPlan(TP)) do delete(taskPlan(TP)).
@@ -25,7 +25,7 @@ module resetAgent {
 	forall bel(goalZone(X, Y)) do delete(goalZone(X, Y)).
 	forall bel(roleZone(X, Y)) do delete(roleZone(X, Y)).
 	forall bel(goalCell(X, Y)) do delete(goalCell(X, Y)).
-	forall bel(taskboard(X, Y)) do delete(taskboard(X, Y)).
+	forall bel(roleCell(X, Y)) do delete(roleCell(X, Y)).
 	forall bel(taskSubmitted(T)) do delete(taskSubmitted(T)).
 	forall bel(resourceReply(R)) do delete(resourceReply(R)).
 	forall bel(enumDirList(P, V)) do delete(enumDirList(P, V)).

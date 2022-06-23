@@ -1,4 +1,4 @@
-use "../../knowledge" as knowledge.
+use "../../knowledge/knowledge" as knowledge.
 
 module getPercepts {
 	%%%%%%%%%%%%%%%%%%%% PERCEIVE STEP %%%%%%%%%%%%%%%%%%%%
@@ -48,10 +48,10 @@ module getPercepts {
 	
 	
 	%%%%%%%%%%%%%%%%%%%% PERCEIVE ROLE %%%%%%%%%%%%%%%%%%%%
-	if percept(role(R)), not(bel(role(R)))
-		then insert(role(R)).
-	if bel(role(R)), not(percept(role(R)))
-		then delete(role(R)).
+	if percept(role(R)), not(bel(myRole(R)))
+		then insert(myRole(R)).
+	if bel(myRole(R)), not(percept(role(R)))
+		then delete(myRole(R)).
 	
 		
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE THINGS %%%%%%%%%%%%%%%%%%%%%%%

@@ -1,4 +1,4 @@
-use "../../knowledge" as knowledge.
+use "../../knowledge/knowledge" as knowledge.
 
 module updateBeliefState {
 
@@ -141,14 +141,11 @@ module updateBeliefState {
 		do delete(connectionFromTo(X, Y, ToX, ToY, Agent)).
 	
 	
-	%%%%%%%%% Taskboards and dispensers are permanent %%%%%%%%%
-	forall bel(thing(Xr, Yr, Type, Details), (Type = taskboard ; Type = dispenser)), 
+	%%%%%%%%% Dispensers are permanent %%%%%%%%%
+	forall bel(thing(Xr, Yr, Type, Details), (Type = dispenser)), 
 	       bel(relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y)) do {
 	       
-	 	if 	 bel(Type = taskboard,  not(taskboard(X, Y))) 
-	 	then insert(taskboard(X, Y)) + insert(share(taskboard(X, Y))).
-	 	
-	 	if   bel(Type = dispenser, not(dispenser(X, Y, Details))) 
+	 	if 	 not(bel(dispenser(X, Y, Details))) 
 	 	then insert(dispenser(X, Y, Details)) + insert(share(dispenser(X, Y, Details))).
 	 }
 	

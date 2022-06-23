@@ -1,20 +1,26 @@
-:- dynamic
- 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DYNAMIC BELIEFS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+:- dynamic  
  	%%%%%% COMMON %%%%%%
-	name/1, team/1, teamSize/1, steps/1, vision/1, clearEnergyCost/1, maxEnergy/1, 
-	clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1, role/6,
+	attachedToMe/2,		% Things attached to the agent 
+	enumDirList/2, 		% Pseudo-random list of enumerated directions
+	clearEnergyCost/1, clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1,	% Clearing related beliefs
+	maxEnergy/1, 		% Maximum energy
+	myRole/1,		% Current role
+	vision/1,		% Vision radius
 	
-	% Environment percepts
-	step/1, score/1, lastAction/1, lastActionResult/1, lastActionParams/1,
-	energy/1, deactivated/1, task/4, attached/2,
-	thing/4, accepted/1, role/1, goalZone/2, roleZone/2, norm/5, violation/1,
-	surveyed/4, surveyed/2, hit/2,
+	% Initial percepts
+	name/1, team/1, teamSize/1, steps/1, role/6,
 	
-	% Things
-	taskboard/2, dispenser/3,
+	% Request-Action percepts
+	accepted/1, attached/2, deactivated/1, energy/1, goalZone/2, hit/2, 
+	lastAction/1, lastActionResult/1, lastActionParams/1,
+	norm/5, roleZone/2, surveyed/4, surveyed/2, score/1, 
+	step/1, task/4, thing/4, violation/1,
 	
-	% Internal percepts
-	goalCell/2, roleCell/2,
+	% Permanent things
+	dispenser/3, goalCell/2, roleCell/2,
 	
 	% myPosition(?X, ?Y) - Current position of agent
 	myPosition/2,
@@ -22,10 +28,8 @@
 	% visited(?X, ?Y, ?Step)
 	visited/3,
 	
-	enumDirList/2, attachedToMe/2,
 	
-	
-	%%%%%% Communiaction %%%%%%
+	%%%%%% COMMUNICATION %%%%%%
 	commonEnvironmentPercepts/3,
 	savedCommonEnvironmentPercepts/3,
 	
@@ -35,16 +39,15 @@
 	% Simply used to temporarily store new connections
 	newConnection/3,
 	
-	%connectionUpdate/2,
-	connectionUpdate/1, 
-	newConnections/3,
+	% Connections
 	connectionRequest/5,
-	connectionToInfo/2,
+	connectionUpdate/1,
+	connectionToInfo/2, 
+	newConnections/3,
 		
 		
 	%%%%%% GOALS %%%%%%
-	explore/0, fullyEquipped/0, fullyConnected/0, findMapDimensions/0, restart/0, goTo/2,
-	actionPlan/1,
+	actionPlan/1, explore/0, fullyEquipped/0, fullyConnected/0, findMapDimensions/0, goTo/2, restart/0,
 	
 	
 	%%%%%% PLANNING %%%%%%
@@ -66,14 +69,20 @@
 	% connectionFromTo
 	connectionFromTo/3, connectionFromTo/5, blockDelivered/1,
 	
-	
 	waypointsToGoal/2,
 	
 	%%%%%%%%%% THESE ARE SIMPLY TO STOP GOAL FROM COMPLAINING %%%%%%%%%
 	translateToMyOrigin_Agent/2, findNC_folder/1, collectListsToSets/0, gcd_helper/0,
 	connectedBlocks_folder/0, rankTask/0, buildAgentPlanFromAssignments/1, relativeToAbsolutePositionOfPoints/0.			
-			
-			
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% STATIC BELIEFS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 obstacle(Xr, Yr) :-
 	thing(Xr, Yr, obstacle, _).
 			
@@ -93,7 +102,6 @@ nameToNumber(Name, Number) :-
  	atom_number(Number_str, Number).
  	
  	
- 	
  nameToChannel(Name, Channel) :-
  	nameToNumber(Name, Number),
  	string_concat("Channel", Number, Channel).
@@ -105,9 +113,9 @@ taskToChannel(TaskMaster, TaskName, ChannelName) :-
  	string_concat(FirstHalf, SecondHalf, ChannelName).
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NAVIGATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%% RLATIVE NAVIGATION %%%%%%%%%%%%%%%%%%
-% Block in sight
+%%%%%% NAVIGATION %%%%%%
+
+%% Relative navigation
 blockInView(Xr, Yr, Type) :-
 	thing(Xr, Yr, block, Type),
 	not(attached(Xr, Yr)).
@@ -145,7 +153,6 @@ connectedBlocks_folder((X, Y, Agent), OldConnections, AllConnectedBlocks) :-
 	list_to_ord_set(NewConnections, NewConnections_ord),
 	ord_union(OldConnections, NewConnections_ord, ConnectedBlocks_ord),
 	foldl(connectedBlocks_folder, NewConnections_ord,  ConnectedBlocks_ord, AllConnectedBlocks).
-	
 	
 % The locations around (X, Y) has no agents.
 agentFreeRelativeLocation(Xr, Yr) :-
@@ -204,6 +211,7 @@ rotation90(cw, 0, -1, 1, 0).
 rotation90(cw, -1, 0, 0, -1).
 rotation90(cw, 0, 1, -1, 0).
 rotation90(cw, 1, 0, 0, 1).
+
 % 180 degrees
 rotation180(ccw, 1, 0, -1, 0).
 rotation180(ccw, 0, -1, 0, 1).
@@ -225,7 +233,6 @@ blockedRotation(R, Angle) :-
 	impassable(Xr, Yr).
 	
 	
-% availableAttachmentSpots - MAKE IT SUCH THAT AN AGENT CAN ONLY ATTACH TWO BLOCKS!
 % availableAttachmentSpots - MAKE IT SUCH THAT AN AGENT CAN ONLY ATTACH TWO BLOCKS!
 availableAttachmentSpots(X, Y) :- 
 	% Find all attachments
@@ -314,6 +321,7 @@ positionScore(D, Xb, Yb, PScore) :-
 	translate(D, 0, 0, X, Y),
 	distanceBetweenPoints_Manhattan(X, Y, Xb, Yb, PScore).
 	
+	
 % visitedScore
 visitedScore(D, VScore) :-
 	myPosition(Xr, Yr),
@@ -338,7 +346,6 @@ detachScore(D, Score) :-
 	Score is ExScore+DScore.
 	
 	
-	
 % All directions
 validDirection(D) :-
 	member(D, [n, s, e, w]),
@@ -351,6 +358,7 @@ validDirectionAfterRotation(D) :-
 	blockedForMyAttachments(D),
 	not(blockedRotation(R, 90)),
 	not(blockedAfterRotation(R, D)).
+
 
 % Heuristic
 exploreScore(D, VSum) :-
@@ -431,17 +439,17 @@ outerPoints_iterator([(X, Y)|Points], (WestX, WestY), (NorthX, NorthY), (EastX, 
 
 
 addOffset(OffsetX, OffsetY, Input, Output) :-
-	Input = taskboard(Xt, Yt) 	-> 
-		(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xt, Yt, XFromMyOrigin, YFromMyOrigin),
-		 Output = taskboard(XFromMyOrigin, YFromMyOrigin)) 
-	;
 	Input = dispenser(Xd, Yd, Type) -> 
 		(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xd, Yd, XFromMyOrigin, YFromMyOrigin),
 		 Output = dispenser(XFromMyOrigin, YFromMyOrigin, Type)) 
 	;
 	(Input = goalCell(Xgc, Ygc),
 		(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xgc, Ygc, XFromMyOrigin, YFromMyOrigin),
-		 Output = goalCell(XFromMyOrigin, YFromMyOrigin))).
+		 Output = goalCell(XFromMyOrigin, YFromMyOrigin)))
+	;
+	(Input = roleCell(Xrc, Yrc),
+		(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xrc, Yrc, XFromMyOrigin, YFromMyOrigin),
+		 Output = roleCell(XFromMyOrigin, YFromMyOrigin))).
 
 
 addOffset_list(_, _, [], []).
@@ -594,7 +602,8 @@ identifyCommonEnvironmentPercepts(X, Y, Cep) :-
 		   (  
 		      thing(Xe, Ye, Type, _);
 		      (obstacle(Xe, Ye), Type = obstacle);
-		      (goalZone(Xe, Ye), Type = goal)	      
+		      (goalZone(Xe, Ye), Type = goalZone);
+		      (roleZone(Xe, Ye), Type = roleZone)
 		   ),
 		   % Exclude the agent itself
 		   (Xe, Ye) \= (X, Y),
@@ -766,12 +775,12 @@ findBestMapDimensions(FoundMapDimensions, MapDimensions) :-
 % Find new knowledge from new connections	
 shareCommonKnowledge(AllUpdates, NewConnections, NewKnowledge) :-
 	% My knowledge
-	shareableKnowledge((MyTaskboards, MyDispensers, MyGoalCells)),
+	shareableKnowledge((MyDispensers, MyGoalCells, MyRoleCells)),
 	
 	% Find knowledge
-	findall((NewTaskboards, NewDispensers, NewGoalCells),
+	findall((NewDispensers, NewGoalCells, NewRoleCells),
 		(
-		 % Find the Taskboards, Dispensers and GoalCells of new Connections
+		 % Find the Dispensers, GoalCells RoleCells of new Connections
 		 member((Agent, Xoffset, Yoffset), NewConnections),
 		 member((Agent, _, _, AgentKnowledge, AgentTaskMaster), AllUpdates),
 
@@ -780,17 +789,17 @@ shareCommonKnowledge(AllUpdates, NewConnections, NewKnowledge) :-
 		 	AgentTaskMaster = [] ; 
 		 	(AgentTaskMaster = [TM], not(taskMaster(TM)))
 		 ),
-		 AgentKnowledge = (AgentTaskboards, AgentDispensers, AgentGoalCells),
+		 AgentKnowledge = (AgentDispensers, AgentGoalCells, AgentRoleCells),
 		
 		 % Add offset to knowledge
-		 addOffset_list(Xoffset, Yoffset, AgentTaskboards, Taskboards),
 		 addOffset_list(Xoffset, Yoffset, AgentDispensers, Dispensers),
 		 addOffset_list(Xoffset, Yoffset, AgentGoalCells, GoalCells),
+		 addOffset_list(Xoffset, Yoffset, AgentRoleCells, RoleCells),
 		 
 		 % Only get new information
-		 ord_subtract(Taskboards, MyTaskboards, NewTaskboards),
 		 ord_subtract(Dispensers, MyDispensers, NewDispensers),
-		 ord_subtract(GoalCells, MyGoalCells, NewGoalCells)
+		 ord_subtract(GoalCells, MyGoalCells, NewGoalCells),
+		 ord_subtract(RoleCells, MyRoleCells, NewRoleCells)
 		),
 		
 		Knowledge),
@@ -798,14 +807,8 @@ shareCommonKnowledge(AllUpdates, NewConnections, NewKnowledge) :-
 	foldl(collectListsToSets, Knowledge, ([], [], []), NewKnowledge).
 
 
-% Knowledge is made of three lists - taskboards, dispensers and goalcells
+% Knowledge is made of three lists - dispensers, goalcells and rolecells
 shareableKnowledge(Knowledge) :-
-	% find all taskboards
-	findall(taskboard(Xt, Yt),
-		taskboard(Xt, Yt),
-		Taskboards),
-	list_to_ord_set(Taskboards, Ord_Taskboards),
-
 	% find all dispensers
 	findall(dispenser(Xd, Yd, Details),
 		dispenser(Xd, Yd, Details),
@@ -818,12 +821,15 @@ shareableKnowledge(Knowledge) :-
 		GoalCells),
 	list_to_ord_set(GoalCells, Ord_GoalCells),
 	
+	% find all rolecells
+	findall(roleCell(Xrc, Yrc),
+		roleCell(Xrc, Yrc),
+		RoleCells),
+	list_to_ord_set(RoleCells, Ord_RoleCells),
+	
 	% append everything into knowledge list.
-	Knowledge = (Ord_Taskboards, Ord_Dispensers, Ord_GoalCells).
+	Knowledge = (Ord_Dispensers, Ord_GoalCells, Ord_RoleCells).
 	
-	
-
-
 
 
 newConnectionsOrdered(NewConnectionsOrdered) :-
@@ -869,10 +875,6 @@ finishedStepInTaskPlan(CurrentToDo, _, BlockType, BlockQty, _) :-
 	length(Attachments, NrOfAttachedBlocks),
 	NrOfAttachedBlocks >= BlockQty.
 	
-finishedStepInTaskPlan(CurrentToDo, TaskName, _, _, _) :-
-	CurrentToDo = taskboard(_, _),
-	accepted(TaskName).
-
 finishedStepInTaskPlan(CurrentToDo, TaskName, _, _, Connections) :-
 	CurrentToDo = goalCell(_, _),
 	name(MyName),
@@ -1290,42 +1292,16 @@ closestResourcesWithAttachedBlocks(NrOfAttachedBlocks, BlockType, GoalCell, MaxD
 	distanceBetweenPoints_Manhattan(MyX, MyY, X, Y, DistToGoal),
 	DistToGoal < MaxDist, 
 	Qty = NrOfAttachedBlocks,
-	closestTaskboardToGoal(goalCell(X, Y), Taskboard, DistWithTaskboard),
-	(DistWithTaskboard < MaxDist ->
-		ClosestResource = (BlockType, [DistToGoal], [DistWithTaskboard, Taskboard], Qty)
-		;
-		ClosestResource = (BlockType, [DistToGoal], [], Qty)
-	).
+	ClosestResource = (BlockType, [DistToGoal], [], Qty).
 
 
 closestResourcesWithoutAttachedBlocks(BlockType, GoalCell, MaxDist, ClosestResource) :-
 	Qty is 2,
         closestDispenserToGoal(GoalCell, BlockType, Dispenser, DistWithDispenser),
         DistWithDispenser < MaxDist,
-        closestDispenserAndTaskboardToGoal(GoalCell, BlockType, ClosestElement, NextElement, TotalDist),
-        (TotalDist < MaxDist ->
-        	ClosestResource = (BlockType, [DistWithDispenser, Dispenser], [TotalDist, ClosestElement, NextElement], Qty)
-        	;
-        	ClosestResource = (BlockType, [DistWithDispenser, Dispenser], [], Qty)
-        ).
+        ClosestResource = (BlockType, [DistWithDispenser, Dispenser], [], Qty).
         
         	
-         
-
-closestTaskboardToGoal(goalCell(X, Y), Taskboard, ShortestDist) :-
-	myPosition(MyX, MyY), 
-	findall([Distance, taskboard(Xt, Yt)],
-	                 (
-	                 	taskboard(Xt, Yt), 
-	                 	distanceBetweenPoints_Manhattan(MyX, MyY, Xt, Yt, DistanceToTaskboard),
-	                 	distanceBetweenPoints_Manhattan(Xt, Yt, X, Y, DistanceFromTaskboard),
-	                 	Distance is DistanceToTaskboard + DistanceFromTaskboard
-	                 ),
-	                 Taskboards),
-	         sort(Taskboards, SortedTaskboards), 
-	         SortedTaskboards = [[ShortestDist, Taskboard]|_].
-	         
-
 closestDispenserToGoal(goalCell(X, Y), BlockType, Dispenser, ShortestDist) :-
 	myPosition(MyX, MyY), 
 	findall([Distance, dispenser(Xd, Yd, BlockType)],
@@ -1337,46 +1313,7 @@ closestDispenserToGoal(goalCell(X, Y), BlockType, Dispenser, ShortestDist) :-
 	                 ),
 	                 Dispensers),
 	         sort(Dispensers, SortedDispensers), 
-	         SortedDispensers = [[ShortestDist, Dispenser]|_].
-
-
-closestDispenserAndTaskboardToGoal(goalCell(X, Y), BlockType, ClosestElement, NextElement, TotalDist) :-
-	myPosition(MyX, MyY),
-	
-	findall(dispenser(Xd, Yd, BlockType), dispenser(Xd, Yd, BlockType), Dispensers),
-	findall(taskboard(Xt, Yt), taskboard(Xt, Yt), Taskboards),
-	
-	% find shortest combination
-	findall([Dist, Elem1, Elem2],
-		(
-			(	
-				member(taskboard(Xt, Yt), Taskboards),
-				member(dispenser(Xd, Yd, BlockType), Dispensers),
-				
-				(
-					( Elem1 = taskboard(Xt, Yt),
-					  Elem2 = dispenser(Xd, Yd, BlockType),
-					  
-					  distanceBetweenPoints_Manhattan(MyX, MyY, Xt, Yt, Dist1),
-					  distanceBetweenPoints_Manhattan(Xt, Yt, Xd, Yd, Dist2),
-					  distanceBetweenPoints_Manhattan(Xd, Yd, X, Y, Dist3),
-					  Dist is Dist1 + Dist2 + Dist3
-					) ;
-					( 
-					  Elem1 = dispenser(Xd, Yd, BlockType),
-					  Elem2 = taskboard(Xt, Yt),
-					  
-					  distanceBetweenPoints_Manhattan(MyX, MyY, Xd, Yd, Dist1),
-					  distanceBetweenPoints_Manhattan(Xd, Yd, Xt, Yt, Dist2),
-					  distanceBetweenPoints_Manhattan(Xt, Yt, X, Y, Dist3),
-					  Dist is Dist1 + Dist2 + Dist3
-					)
-				)
-			)
-		),
-		AllCombinations),
-		
-	sort(AllCombinations,  [[TotalDist, ClosestElement, NextElement]|_]).	         
+	         SortedDispensers = [[ShortestDist, Dispenser]|_].     
 	        
 
 nextTaskMaster(ConnectedAgents, NextTaskMaster) :-
@@ -1488,19 +1425,6 @@ collectListsToSets((L1, L2, L3), (L4, L5, L6), (R1, R2, R3)) :-
 count([],_,0).
 count([X|T],X,Y):- !, count(T,X,Z), Y is 1+Z.
 count([_|T],X,Z):- count(T,X,Z).
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1701,7 +1625,6 @@ validClearActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path, 
             ),
             PassableStates),
     insertListInHeap(PassableStates, Frontier, ExpandedFrontier).
-
 
 
 

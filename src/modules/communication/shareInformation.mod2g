@@ -1,6 +1,6 @@
-use "../../knowledge.pl" as knowledge.
+use "../../knowledge/knowledge.pl" as knowledge.
 
-use "../percept/updateMap.pl" as module.
+use "../percept/updateMap" as module.
 
 %%% SHARE NEW INFORMATION WITH MY TASK TEAM
 %%% such as newly discovered goalcells, dispensers, etc.
@@ -50,10 +50,10 @@ module shareInformation {
 
 	% Receive new connections
 	listall NewConnections <- 
-		(Agent).sent!(newConnections(Connections, (NewTaskboards, NewDispensers, NewGoalCells), TaskMasterList)) 
+		(Agent).sent!(newConnections(Connections, (NewDispensers, NewGoalCells, NewRoleCells), TaskMasterList)) 
 	do {	
 	
-		forall bel(member([Connections, NewTaskboards, NewDispensers, NewGoalCells, TaskMasterList, Agent], NewConnections)) do {
+		forall bel(member([Connections, NewDispensers, NewGoalCells, NewRoleCells, TaskMasterList, Agent], NewConnections)) do {
 		
 			if bel((agentOffset(Agent, OffsetX, OffsetY)) ; (name(Agent), OffsetX = 0, OffsetY = 0)) then {
 				
@@ -62,11 +62,6 @@ module shareInformation {
 					   not(bel(agentOffset(ConnectAgent, _, _))),
 					   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, ConnectOffsetX, ConnectOffsetY, XFromMyOrigin, YFromMyOrigin))
 				do insert(agentOffset(ConnectAgent, XFromMyOrigin, YFromMyOrigin)). 
-				
-				forall bel(member(taskboard(Xt, Yt), NewTaskboards)),
-					   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xt, Yt, XFromMyOrigin, YFromMyOrigin)),
-					   not(bel(taskboard(XFromMyOrigin, YFromMyOrigin)))
-				do insert(taskboard(XFromMyOrigin, YFromMyOrigin)). 
 				
 				forall bel(member(dispenser(Xd, Yd, Type), NewDispensers)),
 					   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xd, Yd, XFromMyOrigin, YFromMyOrigin)),
@@ -77,6 +72,11 @@ module shareInformation {
 					   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xgc, Ygc, XFromMyOrigin, YFromMyOrigin)),
 					   not(bel(goalCell(XFromMyOrigin, YFromMyOrigin)))
 				do insert(goalCell(XFromMyOrigin, YFromMyOrigin)).
+				
+				forall bel(member(roleCell(Xrc, Yrc), NewRoleCells)),
+					   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xrc, Yrc, XFromMyOrigin, YFromMyOrigin)),
+					   not(bel(roleCell(XFromMyOrigin, YFromMyOrigin)))
+				do insert(roleCell(XFromMyOrigin, YFromMyOrigin)).
 				
 				if not(bel(taskMaster(_))),
 				   bel(TaskMasterList = [TaskMaster|_])
@@ -97,11 +97,6 @@ module shareInformation {
 		forall bel(member([Information, Agent], SharedInfo)),
 			   bel(agentOffset(Agent, OffsetX, OffsetY))
 		do {			
-			if bel(taskboard(Xt, Yt) = Information),
-			   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xt, Yt, XFromMyOrigin, YFromMyOrigin)),
-			   not(bel(taskboard(XFromMyOrigin, YFromMyOrigin)))
-			then insert(taskboard(XFromMyOrigin, YFromMyOrigin)). 
-			
 			if bel(dispenser(Xd, Yd, Type) = Information),
 			   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xd, Yd, XFromMyOrigin, YFromMyOrigin)),
 			   not(bel(dispenser(XFromMyOrigin, YFromMyOrigin, Type)))
@@ -111,6 +106,11 @@ module shareInformation {
 			   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xgc, Ygc, XFromMyOrigin, YFromMyOrigin)),
 			   not(bel(goalCell(XFromMyOrigin, YFromMyOrigin)))
 			then insert(goalCell(XFromMyOrigin, YFromMyOrigin)).  
+			
+			if bel(roleCell(Xrc, Yrc) = Information),
+			   bel(offsetAndTranslateToMyOrigin(OffsetX, OffsetY, Xrc, Yrc, XFromMyOrigin, YFromMyOrigin)),
+			   not(bel(roleCell(XFromMyOrigin, YFromMyOrigin)))
+			then insert(roleCell(XFromMyOrigin, YFromMyOrigin)).  
 		}
 	}
 	

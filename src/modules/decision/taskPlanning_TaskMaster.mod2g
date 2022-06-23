@@ -1,4 +1,4 @@
-use "../../knowledge" as knowledge.
+use "../../knowledge/knowledge" as knowledge.
 
 
 module taskPlanning_TaskMaster {
@@ -8,14 +8,12 @@ module taskPlanning_TaskMaster {
 		% Send requests for resource information, if that has not been done.
 		% record whenever this is done.
 		if not(bel(resourceRequestSent(_, _))), 
-		   bel(nameToChannel(MyName, Channel)), 
-		   bel(taskboard(_, _)), 
+		   bel(nameToChannel(MyName, Channel)),
 		   bel(availableGoalZones(GoalCells)),
 		   bel(getNewTasksRanked([[_, HighestRankedTask]|_]))
 	    then
 			(Channel).send?(resourceRequest(HighestRankedTask, GoalCells)) + 
 			insert(resourceRequestSent(HighestRankedTask, CurrentStep)).
-		
 		
 		% Save all replies - only use them once 3 steps have surpassed
 		if bel(resourceRequestSent(Task, Step)), bel(step(CurrentStep), CurrentStep =< Step + 3) then {

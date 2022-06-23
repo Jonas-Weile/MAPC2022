@@ -1,4 +1,4 @@
-use "../../knowledge" as knowledge.
+use "../../knowledge/knowledge" as knowledge.
 
 module updateMap {
 
@@ -31,14 +31,14 @@ module updateMap {
 		     
 	}
 	
-	forall bel(taskboard(Xt, Yt)) do {
+	forall bel(roleCell(Xrc, Yrc)) do {
 	
-		if true then delete(taskboard(Xt, Yt)).
+		if true then delete(roleCell(Xrc, Yrc)).
 		
-		if bel(translateCoordinatesToMyOrigin(Xt, Yt, XFromMyOrigin, YFromMyOrigin)),
-		   not(bel(taskboard(XFromMyOrigin, YFromMyOrigin)))
-		then insert(taskboard(XFromMyOrigin, YFromMyOrigin)).
-	
+		if bel(translateCoordinatesToMyOrigin(Xrc, Yrc, XFromMyOrigin, YFromMyOrigin)),
+		   not(bel(roleCell(XFromMyOrigin, YFromMyOrigin)))
+		then insert(roleCell(XFromMyOrigin, YFromMyOrigin)).
+		     
 	}
 	
 	forall bel(visited(Xv, Yv, Step)) do {
