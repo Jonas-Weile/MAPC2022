@@ -1,4 +1,4 @@
-use "../../knowledge/knowledge" as knowledge.
+use "../../knowledge_generated" as knowledge.
 
 
 module taskPlanning_TaskMaster {

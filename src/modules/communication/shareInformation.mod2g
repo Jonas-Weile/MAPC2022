@@ -1,4 +1,4 @@
-use "../../knowledge/knowledge.pl" as knowledge.
+use "../../knowledge_generated" as knowledge.
 
 use "../percept/updateMap" as module.
 
