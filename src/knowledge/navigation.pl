@@ -190,10 +190,9 @@ distanceScore(D, X_target, Y_target, Score) :-
 	Score is CurrentDistance - NewDistance.
 
 safeScore(D, Score) :-
-	translate(D, 0, 0, Xr, Yr),
-	(thing(Xr, Yr, marker, clear); thing(Xr, Yr, marker, ci)) ->
-		(epicenter(Xe, Ye), distMan(Xr, Yr, Xe, Ye, Dist), Score is 10*Dist);
-		(Score = 0).
+	epicenter(Xe, Ye) -> 
+		( translate(D, 0, 0, Xr, Yr), distMan(Xr, Yr, Xe, Ye, Dist), Score is 10*Dist ) ;
+		( Score = 0 ).
 
 % Find the epicenter of a clear event
 epicenter(X, Y) :-
@@ -238,7 +237,7 @@ moveDirection(D, Penalty) :-
 	(validDirectionAfterRotation(D), Penalty = 0.1) ; 
 	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D), Penalty = 0.5)).
 	
-exploreAction(Action) :-
+exploreAction(Action, Params) :-
 	findall((Score, D),
 		 (moveDirection(D, Penalty), exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
 		 	Score is EScore + DScore + SScore - Penalty),
@@ -247,7 +246,7 @@ exploreAction(Action) :-
 	DirectionValueListSorted = [(MaxScore, _)|_],
 	step(N), Seed is N mod(24), enumDirList(DL, Seed),
 	member(Direction, DL), 	member((S, Direction), DirectionValueListSorted), S = MaxScore,
-	extractAction(Direction, Action).
+	extractAction(Direction, Action, Params).
 
 	
 
@@ -256,7 +255,7 @@ exploreAction(Action) :-
 %	- move(Direction)
 %	- rotate(Rotation)
 %	- clear(X, Y)
-goToAction(Xr, Yr, Action) :-
+goToAction(Xr, Yr, Action, Params) :-
 	findall((Score, D), 
 		(moveDirection(D, _), 
 			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
@@ -267,16 +266,16 @@ goToAction(Xr, Yr, Action) :-
 	DirectionValueListSorted = [(MaxScore, _)|_],
 	step(N), Seed is N mod(24), enumDirList(DL, Seed),
 	member(Direction, DL), 	member((S, Direction), DirectionValueListSorted), S = MaxScore,
-	extractAction(Direction, Action).
+	extractAction(Direction, Action, Params).
 
 
-extractAction(D, Action) :-
-	validDirection(D) -> Action = move(D) ;
+extractAction(D, Action, Params) :-
+	validDirection(D) -> (Action = move, Params = [D]) ;
 	(
 		validDirectionAfterRotation(D) ->
-			( member(R, [cw, ccw]), not(blockedRotation(R, 90)), Action = rotate(R) ) ;
+			( member(R, [cw, ccw]), not(blockedRotation(R, 90)), Action = rotate, Params = [R]) ;
 				
-				( clearCoordinatesFromDirection(D, X, Y), Action = clear(X, Y) )
+				( clearCoordinatesFromDirection(D, X, Y), Action = clear, Params = [X, Y] )
 	).
 	
 
