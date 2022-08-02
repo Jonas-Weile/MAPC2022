@@ -1,5 +1,20 @@
 use "knowledge_generated" as knowledge.
 
+% adopt role
+define adapt(Role) with
+	pre { true }
+	post { true }
+		
+% attach
+define attach(Direction) with
+	pre { true }
+	post { true }
+	
+% detach
+define detach(Direction) with
+	pre { true }
+	post { true }
+	
 % move
 define move(Direction) with
 	pre { true }
@@ -12,16 +27,6 @@ define request(Direction) with
 
 % rotate
 define rotate(Direction) with
-	pre { true }
-	post { true }
-	
-% attach
-define attach(Direction) with
-	pre { true }
-	post { true }
-	
-% detach
-define detach(Direction) with
 	pre { true }
 	post { true }
 	

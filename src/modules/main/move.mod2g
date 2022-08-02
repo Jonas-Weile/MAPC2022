@@ -1,9 +1,9 @@
-use "../mapcActions" as actionspec.
-use "../knowledge_generated" as knowledge.
+use "../../mapcActions" as actionspec.
+use "../../knowledge_generated" as knowledge.
 
 order = linearall.
 
-module movementModule {
+module move {
 
 	% If clearing, then clear
 	if bel(clearing(ClearXr, ClearYr))
@@ -55,16 +55,13 @@ module movementModule {
 						
 			if bel(goToAction(Xr, Yr, Action))
 			then {
-			
-				% Rotations should always be useful - and possible
-				if bel(Action = rotate(R)) then rotate(R) + exit-module.
-			
-				% If the move is a 'good' move, then perform it.
-				if bel(Action = move(Dir)) then move(Dir) + exit-module.
+				if bel(Action = move(D)) then move(D).
+				if bel(Action = rotate(R)) then rotate(R).
+				if bel(Action = clear(Xc, Yc)) then clear(Xc, Yc).
 			}
 		}
 			
-						
+		% Try to find a path, but without clearing
 		if bel(astarNoClear(XGoalr, YGoalr, AbsolutePath, ActionPlan)),
 		   bel(ActionPlan = [FirstAction|_])
 		then {			
@@ -77,7 +74,7 @@ module movementModule {
 		}
 			
 			
-		% We have to clear..		 
+		% We have to clear... Find path
 		if bel(clearGuard),
 		   bel(astarClear(XGoalr, YGoalr, _, Actions)),
 		   bel(member(clear(ClearX, ClearY), Actions))

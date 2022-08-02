@@ -1,0 +1,115 @@
+use "../../mapcActions" as actionspec.
+use "../../knowledge_generated" as knowledge.
+use "./move".
+
+module solveTask {
+	if bel(name(MyName)),
+	   bel(taskPlan(_, TaskName, _, _, BlockType, BlockQty, Connections))
+	then {
+		if bel(taskPlanToDo([CurrentToDo|_])) then {
+		
+			% Our task is to attach to a block
+			if bel(dispenser(Xd, Yd, BlockType) = CurrentToDo), 
+			   bel(relativePositionOfCoordinatesFromMe(Xd, Yd, Xdr, Ydr)) then {
+			
+				% If we have blocks of another type attached - drop 'em (If they will not be in the way)
+				if bel(attachedToMe(Xr, Yr, block, WrongBlockType), WrongBlockType \= BlockType),
+				   bel(translate(Dir, 0, 0, Xr, Yr)),
+				   not(bel(goalZone(Xr, Yr))),
+				   not(bel(translate(_, Xr, Yr, AnyX, AnyY), goalZone(AnyX, AnyY)))
+				then detach(Dir).
+				
+				if bel(closestBlockOrDispenserInVision(Xr, Yr, _, BlockType)) then {
+					% If we are at the dispenser, 
+					if bel(translate(_, 0, 0, Xr, Yr), rotationRequiredToAttach(Xr, Yr)) then {
+						if bel(possibleRotation(Xr, Yr, R)) then rotate(R).
+						if bel(validDirection(D)) then move(D).
+					}
+			
+					if bel(thing(Xr, Yr, block, _), not(attached(Xr, Yr)), direction(Xr, Yr, Dir))
+						then attach(Dir).
+						
+					if bel(thing(Xr, Yr, dispenser, _), direction(Xr, Yr, Dir))
+						then request(Dir).
+						
+					if true
+					then insert(goTo(Xr, Yr)) + move. 
+				}
+			
+				% We are not next to the dispenser
+				if true
+				then insert(goTo(Xdr, Ydr)) + move. 
+			}
+					
+			
+			% Our Job is to go to the goalzone
+			if bel(CurrentToDo = goalCell(Xgc, Ygc)), 
+			   bel(relativePositionOfCoordinatesFromMe(Xgc, Ygc, Xgcr, Ygcr))
+			then {		
+				
+				if bel(submitAgent(MyName))
+				then {
+									
+					% I am in the correct place
+					if bel(Xgcr = 0, Ygcr = 0)
+					then {
+					
+						% I can submit the task
+					    if bel(patternCompleted(Connections))
+						then submit(TaskName).
+						
+						% I can connect a block
+						if bel(readyToConnect_submitAgent(Connections, ConnectAgent, ConnectFromXr, ConnectFromYr, ConnectToXr, ConnectToYr))
+						then connect(ConnectAgent, ConnectFromXr, ConnectFromYr) +
+						     insert(connectionToInfo(ConnectToXr, ConnectToYr)).
+			   
+			   			if bel(nextBlockPosition_submitAgent(Connections, BlockType, BlockXr, BlockYr))
+			   			then {
+						   	if bel(attachedToMe(BlockXr, BlockYr, block, BlockType)) 
+						   	then skip.
+				
+							if bel(rotationRequiredTask(0, 0, BlockType, BlockXr, BlockYr, R))
+							then rotate(R).
+						}
+					}
+					     
+					% Move towards goalcell
+					if true
+					then insert(goTo(Xgcr, Ygcr)) + move. 
+				}
+				
+				
+				if not(bel(submitAgent(MyName)))
+				then {
+					% I have connected a block
+					if bel(connectionFromTo(BlockXr, BlockYr, _)),
+				       bel(translate(Dir, 0, 0, BlockXr, BlockYr))
+				   	then detach(Dir).
+				    
+				    if bel(nextBlockPosition_otherAgent(Connections, BlockType, BlockFromGoalX, BlockFromGoalY, BlockDist)),
+				       bel(BlockXr is Xgcr + BlockFromGoalX, BlockYr is Ygcr + BlockFromGoalY),
+				       bel(findClosestAdjacentFreePosition(Xgcr, Ygcr, BlockXr, BlockYr, Connections, GoToXr, GoToYr))
+					then {
+					
+						if bel(GoToXr = 0, GoToYr = 0) 
+						then {
+													
+						    % I can connect a block
+							if bel(readyToConnect_otherAgent(Xgcr, Ygcr, BlockXr, BlockYr, BlockType, BlockDist, Connections, ConnectAgent))
+							then connect(ConnectAgent, BlockXr, BlockYr).
+							
+							if bel(attachedToMe(BlockXr, BlockYr, block, BlockType)) then skip.						
+							
+							if bel(rotationRequiredTask(0, 0, BlockType, BlockXr, BlockYr, R))
+							then rotate(R).
+						}
+							
+						if true
+						then insert(goTo(GoToXr, GoToYr)) + move.
+					}
+										
+				}
+			}
+		}
+	}
+}

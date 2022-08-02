@@ -2,7 +2,8 @@
  	%%%%%% COMMON %%%%%%
 	attachedToMe/2,		% Things attached to the agent 
 	enumDirList/2, 		% Pseudo-random list of enumerated directions
-	clearEnergyCost/1, clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1,	%% Clearing related beliefs
+	clearEnergyCost/1, clearing/2, clearSteps/1, clearStepsCounter/1, 
+	completedClearAction/1,	% Clearing related beliefs
 	maxEnergy/1, 		% Maximum energy
 	myRole/1,		% Current role
 	vision/1,		% Vision radius
@@ -60,12 +61,11 @@
 	% resource requests
 	resourceRequest/2, resourceRequestSent/2, resourceReply/1, savedResourceReply/1,
 	
-	% occupied thing by some agent
-	occupied/2, taskTaken/2, checkedTask/1,
-	
 	% connectionFromTo
-	connectionFromTo/3, connectionFromTo/5, blockDelivered/1,
+	connectionFromTo/3, connectionFromTo/5,
 	
+	% occupied thing by some agent
+	occupied/2, taskTaken/2, checkedTask/1, blockDelivered/1,
 	waypointsToGoal/2,
 	
 	%%%%%%%%%% THESE ARE SIMPLY TO STOP GOAL FROM COMPLAINING %%%%%%%%%

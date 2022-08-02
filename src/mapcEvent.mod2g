@@ -5,14 +5,14 @@ use "modules/resetAgent".
 use "modules/communication/receiveConnectionUpdates".
 use "modules/communication/receiveConnectionRequests".
 use "modules/communication/sendConnectionUpdates".
-use "modules/percept/getPercepts".
-use "modules/percept/updateBeliefState".
+use "modules/percepts/getPercepts".
+use "modules/percepts/updateBeliefState".
 use "modules/communication/sendConnectionRequests".
 use "modules/communication/shareInformation".
-use "modules/decision/findTaskMaster".
-use "modules/decision/taskPlanning_TaskMaster".
-use "modules/decision/taskPlanning_OtherAgents".
-use "modules/goal/updateGoals".
+use "modules/taskPlanning/findTaskMaster".
+use "modules/taskPlanning/taskPlanning_TaskMaster".
+use "modules/taskPlanning/taskPlanning_OtherAgents".
+use "modules/goals/updateGoals".
 
 
 module mapcEvent {

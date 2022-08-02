@@ -145,7 +145,7 @@ findClosestAdjacentFreePosition(GoalCellXr, GoalCellYr, Xr, Yr, Connections, GoT
 	% Find number of attachments
 	findall(Dist-(X, Y),
 		(
-			translate(_, Xr, Yr, X, Y),
+			adjacent(Xr, Yr, X, Y),
 			not( impassable(X, Y) ),
 			X_GoalPerspective is X - GoalCellXr,
 			Y_GoalPerspective is Y - GoalCellYr,

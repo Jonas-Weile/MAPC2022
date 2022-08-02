@@ -20,7 +20,7 @@ module receiveConnectionUpdates {
 		     	
 		     		if bel(NewDimensions \= [])
 		     		then all.send!(newDimensions(NewDimensions)) +
-		     			 print(NewDimensions).
+		     			 print("New dimensions: ") + print(NewDimensions).
 		     			
 		     			     	
 		     		if bel(NewConnections \= []) 

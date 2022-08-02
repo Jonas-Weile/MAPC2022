@@ -167,7 +167,7 @@ validRotateActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path,
     findall(Heuristic-state((X,Y), StepCost, RotationLimit, UpdatedEnergy, Path, [rotate(R)|ParentActions], Attachments, ParentClearedCells),
             (member(R,[cw,ccw]),
                 not(astarBlockedRotation(X, Y, R, ParentAttachments,ParentClearedCells)), 
-            	rotateAttachmentsAttached(R,ParentAttachments, Attachments),
+            	rotateAttachments(R,ParentAttachments, Attachments),
             	not(member(state((X,Y), Attachments, ParentClearedCells),ExpandedStates))),
             PassableStates),
     insertListInHeap(PassableStates, Frontier, ExpandedFrontier).
@@ -315,15 +315,3 @@ cellsInRange(X,Y, MinRange, MaxRange, Cells) :-
 				D >= MinRange
 			 ), 
 			Cells).
-
-getAttachments(Attachments) :-
-	findall(attachedToMe(X, Y, block, BlockType), attachedToMe(X, Y, block, BlockType), Attachments).
-
-
-rotateAttachmentsAttached(R, Attachments, AttachmentsRotated) :-
-	findall(attachedToMe(Xr, Yr, block, BlockType), 
-		(
-			member(attachedToMe(X, Y, block, BlockType), Attachments), 
-			rotation90(R, X, Y, Xr, Yr)
-		), 
-		AttachmentsRotated).

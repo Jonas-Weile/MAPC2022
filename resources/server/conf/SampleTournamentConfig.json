@@ -1,7 +1,7 @@
 {
   "server" : {
     "tournamentMode" : "round-robin",
-    "teamsPerMatch" : 2,
+    "teamsPerMatch" : 1,
     "launch" : "key",
     "port" : 12300,
     "backlog" : 10000,
@@ -186,7 +186,6 @@
   ],
 
   "teams" : {
-    "A" : {"prefix" : "agent", "password" : "1"},
-    "B" : {"prefix" : "agent", "password" : "1"}
+    "GOAL-DTU" : {"prefix" : "agent", "password" : "ZwYQgr1"}
   }
 }

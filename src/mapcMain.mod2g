@@ -1,130 +1,29 @@
 use "knowledge_generated" as knowledge.
-use "modules/movementModule".
+use "modules/main/move".
+use "modules/main/explore".
+use "modules/main/solveTask".
 use mapcActions.
 
 exit=never.
 
 module mapcMain {
-
-	if percept(step(0)) then skip.
-	if bel(restart) then skip.
+	% Always skip the first turn - also after restarting.
+	if percept(step(0)) then skip + print("Skipped step 0").
+	if bel(restart) then skip + print("Skipped the restart").
 	
+	% The taskmaster is always busy planning.
 	if bel(name(MyName)),
 	   bel(taskMaster(MyName))
-	then skip.
+	then skip + print("Skipped step as TaskMaster").
 	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TASKS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
-	if bel(name(MyName)),
-	   bel(taskPlan(_, TaskName, _, _, BlockType, BlockQty, Connections))
-	then {		
-		if bel(taskPlanToDo([CurrentToDo|_])) then {
+	% We have a task to solve!
+	if bel(taskPlan(_, _, _, _, _, _, _)) then solveTask.
 		
-			% Our task is to attach to a block
-			if bel(dispenser(Xd, Yd, BlockType) = CurrentToDo), 
-			   bel(relativePositionOfCoordinatesFromMe(Xd, Yd, Xdr, Ydr)) then {
-			
-				% If we have blocks of another type attached - drop 'em (If they will not be in the way)
-				if bel(attachedToMe(Xr, Yr, block, WrongBlockType), WrongBlockType \= BlockType),
-				   bel(translate(Dir, 0, 0, Xr, Yr)),
-				   not(bel(goalZone(Xr, Yr))),
-				   not(bel(translate(_, Xr, Yr, AnyX, AnyY), goalZone(AnyX, AnyY)))
-				then detach(Dir).
-				
-				if bel(closestBlockOrDispenserInVision(Xr, Yr, _, BlockType)) then {
-					% If we are at the dispenser, 
-					if bel(translate(_, 0, 0, Xr, Yr), rotationRequiredToAttach(Xr, Yr)) then {
-						if bel(possibleRotation(Xr, Yr, R)) then rotate(R).
-						if bel(safeExploreDirections(D)) then move(D).
-					}
-			
-					if bel(blockInView(Xr, Yr, _), direction(Xr, Yr, Dir)) 
-						then attach(Dir).
-					if bel(dispenserInView(Xr, Yr, _), direction(Xr, Yr, Dir))
-						then request(Dir).
-						
-					if true
-					then insert(goTo(Xr, Yr)) + movementModule. 
-				}
-			
-				% We are not next to the dispenser
-				if true
-				then insert(goTo(Xdr, Ydr)) + movementModule. 
-			}
-					
-			
-			% Our Job is to go to the goalzone
-			if bel(CurrentToDo = goalCell(Xgc, Ygc)), 
-			   bel(relativePositionOfCoordinatesFromMe(Xgc, Ygc, Xgcr, Ygcr))
-			then {		
-				
-				if bel(submitAgent(MyName))
-				then {
-									
-					% I am in the correct place
-					if bel(Xgcr = 0, Ygcr = 0)
-					then {
-					
-						% I can submit the task
-					    if bel(patternCompleted(Connections))
-						then submit(TaskName).
-						
-						% I can connect a block
-						if bel(readyToConnect_submitAgent(Connections, ConnectAgent, ConnectFromXr, ConnectFromYr, ConnectToXr, ConnectToYr))
-						then connect(ConnectAgent, ConnectFromXr, ConnectFromYr) +
-						     insert(connectionToInfo(ConnectToXr, ConnectToYr)).
-			   
-			   			if bel(nextBlockPosition_submitAgent(Connections, BlockType, BlockXr, BlockYr))
-			   			then {
-						   	if bel(attachedToMe(BlockXr, BlockYr, block, BlockType)) 
-						   	then skip.
-				
-							if bel(rotationRequiredTask(0, 0, BlockType, BlockXr, BlockYr, R))
-							then rotate(R).
-						}
-					}
-					     
-					% Move towards goalcell
-					if true
-					then insert(goTo(Xgcr, Ygcr)) + movementModule. 
-				}
-				
-				
-				if not(bel(submitAgent(MyName)))
-				then {
-					% I have connected a block
-					if bel(connectionFromTo(BlockXr, BlockYr, _)),
-				       bel(translate(Dir, 0, 0, BlockXr, BlockYr))
-				   	then detach(Dir).
-				    
-				    if bel(nextBlockPosition_otherAgent(Connections, BlockType, BlockFromGoalX, BlockFromGoalY, BlockDist)),
-				       bel(BlockXr is Xgcr + BlockFromGoalX, BlockYr is Ygcr + BlockFromGoalY),
-				       bel(findClosestAdjacentFreePosition(Xgcr, Ygcr, BlockXr, BlockYr, Connections, GoToXr, GoToYr))
-					then {
-					
-						if bel(GoToXr = 0, GoToYr = 0) 
-						then {
-													
-						    % I can connect a block
-							if bel(readyToConnect_otherAgent(Xgcr, Ygcr, BlockXr, BlockYr, BlockType, BlockDist, Connections, ConnectAgent))
-							then connect(ConnectAgent, BlockXr, BlockYr).
-							
-							if bel(attachedToMe(BlockXr, BlockYr, block, BlockType)) then skip.						
-							
-							if bel(rotationRequiredTask(0, 0, BlockType, BlockXr, BlockYr, R))
-							then rotate(R).
-						}
-							
-						if true
-						then insert(goTo(GoToXr, GoToYr)) + movementModule.
-					}
-										
-				}
-			}
-		}
-	}
+	% Otherwise, explore
+	if true then explore.
 	
-
-	% If we do not have a task - but are still connected to block, detach these
+	% We do not have a task, and we are not exploring, but are still connected to block(s)..
+	% Detach these blocks!
 	if bel(connectionFromTo(_, _, _)),
 	   bel(connectedBlocks(Dir1, _)),
 	   bel(translate(Dir1, 0, 0, X1, Y1)),
@@ -133,46 +32,6 @@ module mapcMain {
 	   bel(thing(X2, Y2, block, _)),
 	   bel(attached(X2, Y2))
 	then disconnect(X1, Y1, X2, Y2) + print("disconnected: ", X1, Y1, X2, Y2).
-	
-	
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	%%%%%%%%%%%%%%%% EXTRACT EVERYTHING BELOW TO A EXPLORE MODULE %%%%%%%%%%%%%%%%%%%%%%
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	%%%%%%%%%%%%%%%%%%%%% or, at least do some kind of refactoring  %%%%%%%%%%%%%%%%%%%%
-	%%%%%%%%%%%%%%%%%%%%% maybe base it on fulfilling goals instead %%%%%%%%%%%%%%%%%%%%%
-	
-	% Fallback explore - When exploring, all coordinates are relative!
-	if goal(fullyEquipped) then {
-				
-		% We have reached our location
-		if bel(closestBlockOrDispenserInVision(Xr, Yr, _, _)) then {
-			if bel(myAdjacentPositions(Xr, Yr), rotationRequiredToAttach(Xr, Yr)) then {
-			
-				if bel(possibleRotation(Xr, Yr, R)) then rotate(R).
-				
-				if bel(safeExploreDirections(D)) then move(D).
-			}
-			
-			if bel(blockInView(Xr, Yr, _), direction(Xr, Yr, Dir)) 
-				then attach(Dir).
-				
-			if bel(dispenserInView(Xr, Yr, _), direction(Xr, Yr, Dir))
-				then request(Dir).
-		
-			% We are not next to block nor dispenser, but we have our eyes on the prize
-			if bel(goToAction(Xr, Yr, Action)) 
-			then {
-					if bel(Action = move(D)) then move(D).
-					if bel(Action = rotate(R)) then rotate(R).
-			}
-		}
-	}
-	
-	
-	% Keep on exploring
-	if goal(explore) then {
-		if bel(safeExploreDirections(D)) then move(D).
-	}
 	
 	% Skip - avoid no_action
 	if true then skip.

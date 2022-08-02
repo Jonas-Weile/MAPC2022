@@ -1,8 +1,8 @@
 use "knowledge_generated" as knowledge.
 
-use "modules/percept/getInitialPercepts".
-use "modules/percept/initBeliefState".
-use "modules/goal/initGoals".
+use "modules/percepts/getInitialPercepts".
+use "modules/percepts/initBeliefState".
+use "modules/goals/initGoals".
 use "modules/communication/initCommunication".
 
 module mapcInit {

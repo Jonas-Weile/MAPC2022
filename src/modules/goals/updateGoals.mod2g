@@ -7,7 +7,7 @@ module updateGoals {
 
 	%%%%%%%%%%%%%%%%%%%% EXPLORING %%%%%%%%%%%%%%%%%%%%
 	%%% DROP GOALS %%%
-	if a-goal(fullyEquipped), not(bel(availableAttachmentSpots(_, _))) then drop(fullyEquipped).
+	if a-goal(fullyEquipped), not(bel(availableAttachmentSpot(_, _))) then drop(fullyEquipped).
 	
 	if a-goal(fullyConnected) then {
 		if bel(findall(Agent, agentOffset(Agent, _, _), Connections)), 
@@ -23,7 +23,7 @@ module updateGoals {
 
 	%%% ADOPT GOALS %%%
 	if goal(explore) then {
-		if not(goal(fullyEquipped)), bel(availableAttachmentSpots(_, _)) then adopt(fullyEquipped).
+		if not(goal(fullyEquipped)), bel(availableAttachmentSpot(_, _)) then adopt(fullyEquipped).
 	}
 	
 	if bel(teamSize(TeamSize), TeamSize > 30),

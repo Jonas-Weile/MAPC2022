@@ -1,6 +1,5 @@
 use "../../knowledge_generated" as knowledge.
-
-use "../percept/updateMap" as module.
+use "../percepts/updateMap" as module.
 
 %%% SHARE NEW INFORMATION WITH MY TASK TEAM
 %%% such as newly discovered goalcells, dispensers, etc.
