@@ -1,0 +1,81 @@
+use "../../mapcActions" as actionspec.
+use "../../knowledge_generated" as knowledge.
+
+order = linearall.
+
+module goTo {			
+	if bel(goTo(XGoalr, YGoalr)),
+	   bel(relativeToAbsolutePositionOfCoordinates(XGoalr, YGoalr, XGoal, YGoal))
+	then {
+	
+		% The goal is specified everytime the module is called - delete the current one.
+		if true then delete(goTo(XGoalr, YGoalr)).
+		
+		% Delete any old waypoints
+		forall bel(waypointsToGoal((OtherXGoal, OtherYGoal), Waypoints)),
+		       bel(XGoal \= OtherXGoal, YGoal \= OtherYGoal)
+		do delete(waypointsToGoal((OtherXGoal, OtherYGoal), Waypoints)).
+		
+		% Remove waypoint once we reach it.
+		if bel(waypointsToGoal((XGoal, YGoal), [(X, Y)|Rest])),
+		   bel(myPosition(X, Y))
+		then {
+			if true then delete(waypointsToGoal((XGoal, YGoal), [(X, Y)|Rest])).
+		    if not(bel(Rest = [])) then insert(waypointsToGoal((XGoal, YGoal), Rest)).
+		}
+			
+		% If we have a plan, try to execute it
+		%% TODO - seperate action and parameters for safety
+		if bel(actionPlan(Plan), Plan = [NextAction|_])
+		then {
+			if bel(NextAction = move(Dir)), not(bel(blocked(Dir)))
+			then move(Dir) + print("Following my plan - moving") + exit-module.
+			
+			if bel(NextAction = rotate(R)), not(bel(blockedRotation(R, 90)))             
+			then rotate(R) + print("Following my plan - rotating") + exit-module.
+			
+			if bel(NextAction = clear(D)), bel(validClearingDirection(D, Xc, Yc))
+			then clear(Xc, Yc) + print("Following my plan - clearing") + exit-module.
+
+			% If the plan was possible, we would not reach this statement.
+			if true then delete(actionPlan(Plan)).
+		}
+		
+		% Try to naively find movement
+		if bel( (waypointsToGoal((XGoal, YGoal), [(X, Y)|_]), relativePositionOfCoordinatesFromMe(X, Y, Xr, Yr))
+			    ; (Xr = XGoalr, Yr = YGoalr) )
+		then {	
+			if bel(goToAction(Xr, Yr, Action, Params)) 
+			then {
+				if bel(Action = move, [D] = Params) then move(D) + exit-module.
+				if bel(Action = rotate, [R] = Params) then rotate(R) + exit-module.
+				if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc) + exit-module.
+			}
+		}
+			
+		% Perform a-star search, but without clearing
+		% TODO - make sure it works as expected - could we use just one of the two??
+		if bel(astarNoClear(XGoalr, YGoalr, AbsolutePath, ActionPlan)),
+		   bel(ActionPlan = [FirstAction|_])
+		then {			
+		    if bel(findWaypoints(AbsolutePath, Waypoints))
+			then insert(waypointsToGoal((XGoal, YGoal), Waypoints)).
+			if true then insert(actionPlan(ActionPlan)).	
+			if bel(FirstAction = move(Dir)) then move(Dir) + exit-module.
+			if bel(FirstAction = rotate(R)) then rotate(R) + exit-module.
+		}
+			
+		% Perform a-star search with clearing enabled
+		% Ensure clearing is updated to the new scenario
+		if bel(astarClear(XGoalr, YGoalr, AbsolutePath, ActionPlan)),
+		   bel(ActionPlan = [FirstAction|_])
+		then {			
+		    if bel(findWaypoints(AbsolutePath, Waypoints))
+			then insert(waypointsToGoal((XGoal, YGoal), Waypoints)).
+			if true then insert(actionPlan(ActionPlan)).	
+			if bel(FirstAction = move(Dir)) then move(Dir) + exit-module.
+			if bel(FirstAction = rotate(R)) then rotate(R) + exit-module.
+			if bel(FirstAction = clear(X, Y)) then clear(X, Y) + exit-module.
+		}
+	}
+}

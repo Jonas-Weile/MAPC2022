@@ -2,7 +2,7 @@
  	%%%%%% COMMON %%%%%%
 	attachedToMe/2,		% Things attached to the agent 
 	enumDirList/2, 		% Pseudo-random list of enumerated directions
-	clearEnergyCost/1, clearing/2, clearSteps/1, clearStepsCounter/1, 
+	clearEnergyCost/1, clearSteps/1, clearStepsCounter/1, 
 	completedClearAction/1,	% Clearing related beliefs
 	maxEnergy/1, 		% Maximum energy
 	myRole/1,		% Current role
