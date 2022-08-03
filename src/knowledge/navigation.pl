@@ -174,11 +174,10 @@ disruptScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 
-distanceScore(D, X_target, Y_target, Score) :-
-	myPosition(MyX, MyY),
-	distanceBetweenPoints_Manhattan(MyX, MyY, X_target, Y_target, CurrentDistance),
-	translate(D, MyX, MyY, X_new, Y_new),
-	distanceBetweenPoints_Manhattan(X_new, Y_new, X_target, Y_target, NewDistance),
+distanceScore(D, Xr, Yr, Score) :-
+	distMan(0, 0, Xr, Yr, CurrentDistance),
+	translate(D, 0, 0, X_new, Y_new),
+	distMan(X_new, Y_new, Xr, Yr, NewDistance),
 	Score is CurrentDistance - NewDistance.
 
 safeScore(D, Score) :-
