@@ -5,10 +5,6 @@ translate(s, X1, Y1, X2, Y2) :- X2 = X1, Y2 is Y1 + 1.
 translate(e, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 + 1.
 translate(w, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 - 1.
 
-% Infer the direction of a relative position.
-direction(Xr, Yr, D) :-
-	translate(D, 0, 0, Xr, Yr).
-
 % Calculates the resulting position of an object after either 90 0r 180 degree rotation around the agent.
 %% 	rotationXX(Rotation, StartX, StartY, ResultX, ResultY)
 rotation90(ccw,  1, 0, 0, -1).
@@ -28,13 +24,17 @@ rotation180(cw, 0, -1, 0, 1).
 rotation180(cw, -1, 0, 1, 0).
 rotation180(cw, 0, 1, 0, -1).
 
-% Infer angle and rotation to rotate the relative position (Xr, Yr) towards (Xt, Yt)
-rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation90(R, Xr, Yr, Xt, Yt), Angle = 90.
-rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation180(R, Xr, Yr, Xt, Yt), Angle = 180.
+% Infer the direction of a relative position.
+direction(Xr, Yr, D) :-
+	translate(D, 0, 0, Xr, Yr).
 
 % Returns true if (X, Y) and (Xa, Ya) are adjacent.
 adjacent(X, Y, Xa, Ya) :-
 	translate(_, X, Y, Xa, Ya).
+	
+% Infer angle and rotation to rotate the relative position (Xr, Yr) towards (Xt, Yt)
+rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation90(R, Xr, Yr, Xt, Yt), Angle = 90.
+rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation180(R, Xr, Yr, Xt, Yt), Angle = 180.
 
 % Return the details of an attached object at (Xr, Yr).
 attachedToMe(Xr, Yr, Type, Details) :-
@@ -43,6 +43,7 @@ attachedToMe(Xr, Yr, Type, Details) :-
 	thing(Xr, Yr, Type, Details),
 	(Type = block; Type = entity).	
 
+% TODO - check usage and clean!
 connectedBlocks(Dir, AllConnectedBlocks) :-
 	translate(Dir, 0, 0, X, Y),
 	connectionFromTo(X, Y, Agent),
@@ -157,10 +158,6 @@ randomDirection(D) :-
 	member(D, DL),
 	not(blocked(D)).
 
-% TODO
-%actionScore(move) :-
-%actionScore(rotate) :-
-%actionScore(clear) :-
 
 exploreScore(D, VSum) :-
 	Nv = 30,
@@ -172,7 +169,6 @@ exploreScore(D, VSum) :-
 		 	StepDelta is StepC-StepV, StepDelta > 0, V is Vd/(StepDelta*StepDelta)),
 		VScoreList),
 	listSum(VScoreList, VSum, _).
-	
 	
 disruptScore(D, VSum) :-
 	team(Team),
@@ -221,34 +217,37 @@ validDirection(D) :-
 	anyDirection(D),
 	not(blocked(D)).
 	
-validDirectionAfterRotation(D) :-
+validDirectionAfterRotation(D, R) :-
 	anyDirection(D),
-	blocked(D),
-	attachedToMe(_, _, _, _),
+	member(R, [cw, ccw]),
 	blockedForMyAttachments(D),
 	not(blockedRotation(R, 90)),
 	not(blockedAfterRotation(R, D)).
 
-validClearingDirection(D) :-
+validClearingDirection(D, X, Y) :-
 	anyDirection(D), blocked(D), translate(D, 0, 0, X, Y), thing(X, Y, obstacle, _).
 	
-moveDirection(D, Penalty) :-
-	(validDirection(D), Penalty = 0) ; 
-	(validDirectionAfterRotation(D), Penalty = 0.1) ; 
-	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D), Penalty = 0.5)).
-	
+moveDirection(D, Penalty, Action, Params) :-
+	(validDirection(D), Penalty = 0, Action = move, Params = [D]) ; 
+	(validDirectionAfterRotation(D, R), Penalty = 0.1, Action = rotate, Params = [R]) ; 
+	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.5, Action = clear, Params = [X, Y])).
+
+% Find the best action in order to explore the map.
+% Action is one of:
+%	- move(Direction)
+%	- rotate(Rotation)
+%	- clear(X, Y)	
 exploreAction(Action, Params) :-
-	findall((Score, D),
-		 (moveDirection(D, Penalty), exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
+	findall((Score, D, Action, Params),
+		 (moveDirection(D, Penalty, Action, Params), 
+		  	exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
 		 	Score is EScore + DScore + SScore - Penalty),
 	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _)|_],
+	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
 	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction), DirectionValueListSorted), S = MaxScore,
-	extractAction(Direction, Action, Params).
+	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
 
-	
 
 % Find the best action in order to move towards the location (Xr, Yr).
 % Action is one of:
@@ -256,37 +255,18 @@ exploreAction(Action, Params) :-
 %	- rotate(Rotation)
 %	- clear(X, Y)
 goToAction(Xr, Yr, Action, Params) :-
-	findall((Score, D), 
-		(moveDirection(D, _), 
+	findall((Score, D, Action, Params),
+		(moveDirection(D, Penalty, Action, Params), 
 			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
 			Score is (DScore + EScore + SScore)
 		), 
-		DirectionValueList),
+	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _)|_],
+	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
 	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction), DirectionValueListSorted), S = MaxScore,
-	extractAction(Direction, Action, Params).
+	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
 
 
-extractAction(D, Action, Params) :-
-	validDirection(D) -> (Action = move, Params = [D]) ;
-	(
-		validDirectionAfterRotation(D) ->
-			( member(R, [cw, ccw]), not(blockedRotation(R, 90)), Action = rotate, Params = [R]) ;
-				
-				( clearCoordinatesFromDirection(D, X, Y), Action = clear, Params = [X, Y] )
-	).
-	
-
-clearCoordinatesFromDirection(D, X, Y) :-
-	translate(D, 0, 0, X1, Y1),
-	(myRole(digger) ->
-		(translate(D, X1, Y1, X, Y)) ;
-		(X = X1, Y = Y1)
-	).
-
-	
 % Find the closest block/dispenser in vision without any nearby agents
 closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	findall((Dist, Xr, Yr, Type, Details), 
