@@ -24,7 +24,7 @@ hs_err_pid*
 resources/server/logs/
 resources/server/replays/
 resources/knowledge_backup.pl
-knowledge_generated.pl
+src/knowledge_generated.pl
 
 .project
 .settings/

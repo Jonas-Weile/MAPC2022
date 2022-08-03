@@ -1,61 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %% a_star.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
-
-constructiveMove(_, _, _) :-
-	thing(Xc, Yc, marker, clear); thing(Xc, Yc, marker, ci).
-
-constructiveMove(GoalXr, GoalYr, Dir)  :-
-	translate(Dir, 0, 0, Xr, Yr),
-	not(recentlyVisited(Xr, Yr)),
-	distanceBetweenPoints_Manhattan(0, 0, GoalXr, GoalYr, MyDist),
-	distanceBetweenPoints_Manhattan(Xr, Yr, GoalXr, GoalYr, DistAfterMove),
-	DistAfterMove < MyDist,
-	!.
-
-constructiveMove(GoalXr, GoalYr, Dir)  :-
-	translate(Dir, 0, 0, Xr, Yr),
-	not(recentlyVisited(Xr, Yr)),
-	distanceBetweenPoints_Manhattan(0, 0, GoalXr, GoalYr, MyDist),
-	impassableObjectClose(0, 0, Xo, Yo),
-	impassableObjectClose(Xr, Yr, Xo, Yo),
-	distanceBetweenPoints_Manhattan(Xo, Yo, GoalXr, GoalYr, ObjectDist),
-	ObjectDist < MyDist,
-	!.
-
-recentlyVisited(Xr, Yr) :-
-	step(CurrentStep),
-	relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y),
-	visited(X, Y, Step),
-	2 < CurrentStep - Step.	
-
-impassableObjectClose(X, Y, Xobject, Yobject) :-
-	surroundingCells(X, Y, SurroundingCells),
-	member((Xobject, Yobject), SurroundingCells), 
-	impassable(Xobject, Yobject).
-
-findWaypoints([], []).
-findWaypoints(Path, Waypoints) :-
-	Path = [(MyX, MyY), (X, Y)|RemainingPath],
-	translate(D, MyX, MyY, X, Y),
-	findWaypoints_rec(D, (X, Y), RemainingPath, [], Waypoints).
-
-findWaypoints_rec(_, _, [], Waypoints, Waypoints).
-findWaypoints_rec(D, (X, Y), [(X, Y)|RemainingPath], FoundWaypoints, Waypoints) :-
-	!,
-	findWaypoints_rec(D, (X, Y), RemainingPath, FoundWaypoints, Waypoints).
-findWaypoints_rec(D, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
-	translate(D, X, Y, NextX, NextY),
-	!,
-	findWaypoints_rec(D, (NextX, NextY), RemainingPath, FoundWaypoints, Waypoints).
-
-findWaypoints_rec(_, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
-	translate(D, X, Y, NextX, NextY),
-	append(FoundWaypoints, [(X, Y)], NewFoundWaypoints),
-	findWaypoints_rec(D, (NextX, NextY), RemainingPath, NewFoundWaypoints, Waypoints).
-	
-
 astarNoClear(GoalXr,GoalYr,Path, Actions) :- 
     empty_heap(Frontier),
     getAttachments(Attachments),
@@ -68,11 +13,6 @@ astarNoClear(GoalXr,GoalYr,Path, Actions) :-
     reverse([(FinalX, FinalY)|RevPath], Path_relative),
     maplist(relativeToAbsolutePositionOfPoints, Path_relative, Path),
     reverse(RevActions, Actions).
-    
-    
-   
-clearGuard :-
-	(obstacle(X, Y) ; ( thing(X, Y, block, _), not(attached(X, Y))) ).
 
 astarClear(GoalXr, GoalYr, Path, Actions) :- 
     empty_heap(Frontier),
@@ -107,7 +47,6 @@ astarRecursiveClear(GoalX,GoalY,Frontier, _, [(X,Y)| Path], CompleteActions) :-
 		distMan(0, 0, X, Y, 5)
 	),	
     !.
-    
    
 	
 astarRecursiveNoClear(GoalX,GoalY,Frontier, ExpandedStates, CompletePath, CompleteActions) :-
@@ -542,7 +481,7 @@ oldConnectionsOrdered(OldConnectionsOrdered) :-
  :- dynamic  
 	attachedToMe/2,		% Things attached to the agent 
 	enumDirList/2, 		% Pseudo-random list of enumerated directions
-	clearEnergyCost/1, clearing/2, clearSteps/1, clearStepsCounter/1, 
+	clearEnergyCost/1, clearSteps/1, clearStepsCounter/1, 
 	completedClearAction/1,	% Clearing related beliefs
 	maxEnergy/1, 		% Maximum energy
 	myRole/1,		% Current role
@@ -786,9 +725,6 @@ translate(s, X1, Y1, X2, Y2) :- X2 = X1, Y2 is Y1 + 1.
 translate(e, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 + 1.
 translate(w, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 - 1.
 
-direction(Xr, Yr, D) :-
-	translate(D, 0, 0, Xr, Yr).
-
 rotation90(ccw,  1, 0, 0, -1).
 rotation90(ccw, 0, -1, -1, 0).
 rotation90(ccw, -1, 0, 0, 1).
@@ -806,11 +742,14 @@ rotation180(cw, 0, -1, 0, 1).
 rotation180(cw, -1, 0, 1, 0).
 rotation180(cw, 0, 1, 0, -1).
 
-rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation90(R, Xr, Yr, Xt, Yt), Angle = 90.
-rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation180(R, Xr, Yr, Xt, Yt), Angle = 180.
+direction(Xr, Yr, D) :-
+	translate(D, 0, 0, Xr, Yr).
 
 adjacent(X, Y, Xa, Ya) :-
 	translate(_, X, Y, Xa, Ya).
+	
+rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation90(R, Xr, Yr, Xt, Yt), Angle = 90.
+rotation(R, Xr, Yr, Xt, Yt, Angle) :- rotation180(R, Xr, Yr, Xt, Yt), Angle = 180.
 
 attachedToMe(Xr, Yr, Type, Details) :-
 	translate(_, 0, 0, Xr, Yr),
@@ -876,34 +815,31 @@ rotateAttachments(R, Attachments, AttachmentsRotated) :-
 			member(attachedToMe(X, Y, block, BlockType), Attachments), 
 			rotation90(R, X, Y, Xr, Yr)
 		), 
-		AttachmentsRotated).
-	
-getAttachments(Attachments) :-
-	findall(attachedToMe(X, Y, block, BlockType), _, Attachments).
-	
+		AttachmentsRotated).	
 	
 
-availableAttachmentSpot(Xr, Yr) :- 
-	findall(attachedToMe(Xa, Ya, Type, Details),
-		attachedToMe(Xa, Ya, Type, Details),
-		Attachments),
+availableAttachmentSpot(Xr, Yr) :-
+	getAttachments(Attachments),
 		
 	(
 		Attachments = [] ->
 			member((Xr, Yr), [(1, 0), (0, 1), (-1, 0), (0, -1)])
 			;
 			(
-				[attachedToMe(Xa, Ya, Type, Details)] = Attachments,
+				[attachedToMe(Xa, Ya, _, _)] = Attachments,
 				rotation180(cw, Xa, Ya, Xr, Yr)
 			)
 	).
 
+
+getAttachments(Attachments) :-
+	findall(attachedToMe(X, Y, block, BlockType), attachedToMe(X, Y, block, BlockType), Attachments).
 	
 rotationRequiredToAttach(Xr, Yr) :-
 	not(availableAttachmentSpot(Xr, Yr)), availableAttachmentSpot(_, _).
 			
 			
-possibleRotation(Xr, Yr, R) :-
+possibleRotationToAttach(Xr, Yr, R) :-
 	availableAttachmentSpot(Xa, Ya),
 	rotation(R, Xa, Ya, Xr, Yr, Angle),
 	(
@@ -931,7 +867,6 @@ exploreScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 	
-	
 disruptScore(D, VSum) :-
 	team(Team),
 	translate(D, 0, 0, Xr, Yr),
@@ -940,18 +875,16 @@ disruptScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 
-distanceScore(D, X_target, Y_target, Score) :-
-	myPosition(MyX, MyY),
-	distanceBetweenPoints_Manhattan(MyX, MyY, X_target, Y_target, CurrentDistance),
-	translate(D, MyX, MyY, X_new, Y_new),
-	distanceBetweenPoints_Manhattan(X_new, Y_new, X_target, Y_target, NewDistance),
+distanceScore(D, Xr, Yr, Score) :-
+	distMan(0, 0, Xr, Yr, CurrentDistance),
+	translate(D, 0, 0, X_new, Y_new),
+	distMan(X_new, Y_new, Xr, Yr, NewDistance),
 	Score is CurrentDistance - NewDistance.
 
 safeScore(D, Score) :-
-	translate(D, 0, 0, Xr, Yr),
-	(thing(Xr, Yr, marker, clear); thing(Xr, Yr, marker, ci)) ->
-		(epicenter(Xe, Ye), distMan(Xr, Yr, Xe, Ye, Dist), Score is 10*Dist);
-		(Score = 0).
+	epicenter(Xe, Ye) -> 
+		( translate(D, 0, 0, Xr, Yr), distMan(Xr, Yr, Xe, Ye, Dist), Score is 10*Dist ) ;
+		( Score = 0 ).
 
 epicenter(X, Y) :-
 	findall((Xc, Yc), (thing(Xc, Yc, marker, clear); thing(Xc, Yc, marker, ci)), StrikeZone),
@@ -978,67 +911,46 @@ validDirection(D) :-
 	anyDirection(D),
 	not(blocked(D)).
 	
-validDirectionAfterRotation(D) :-
+validDirectionAfterRotation(D, R) :-
 	anyDirection(D),
-	blocked(D),
-	attachedToMe(_, _, _, _),
+	member(R, [cw, ccw]),
 	blockedForMyAttachments(D),
 	not(blockedRotation(R, 90)),
 	not(blockedAfterRotation(R, D)).
 
-validClearingDirection(D) :-
+validClearingDirection(D, X, Y) :-
 	anyDirection(D), blocked(D), translate(D, 0, 0, X, Y), thing(X, Y, obstacle, _).
 	
-moveDirection(D, Penalty) :-
-	(validDirection(D), Penalty = 0) ; 
-	(validDirectionAfterRotation(D), Penalty = 0.1) ; 
-	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D), Penalty = 0.5)).
-	
-exploreAction(Action) :-
-	findall((Score, D),
-		 (moveDirection(D, Penalty), exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
+moveDirection(D, Penalty, Action, Params) :-
+	(validDirection(D), Penalty = 0, Action = move, Params = [D]) ; 
+	(validDirectionAfterRotation(D, R), Penalty = 0.1, Action = rotate, Params = [R]) ; 
+	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.5, Action = clear, Params = [X, Y])).
+
+exploreAction(Action, Params) :-
+	findall((Score, D, Action, Params),
+		 (moveDirection(D, Penalty, Action, Params), 
+		  	exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
 		 	Score is EScore + DScore + SScore - Penalty),
 	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _)|_],
+	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
 	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction), DirectionValueListSorted), S = MaxScore,
-	extractAction(Direction, Action).
+	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
 
-	
 
-goToAction(Xr, Yr, Action) :-
-	findall((Score, D), 
-		(moveDirection(D, _), 
-			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
-			Score is (DScore + EScore + SScore)
+goToAction(Xr, Yr, Action, Params) :-
+	findall((Score, D, Action, Params),
+		(moveDirection(D, Penalty, Action, Params), 
+			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
+			DScore >= 0, Score is (DScore + DisruptScore + EScore + SScore)
 		), 
-		DirectionValueList),
+	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _)|_],
+	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
 	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction), DirectionValueListSorted), S = MaxScore,
-	extractAction(Direction, Action).
+	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
 
 
-extractAction(D, Action) :-
-	validDirection(D) -> Action = move(D) ;
-	(
-		validDirectionAfterRotation(D) ->
-			( member(R, [cw, ccw]), not(blockedRotation(R, 90)), Action = rotate(R) ) ;
-				
-				( clearCoordinatesFromDirection(D, X, Y), Action = clear(X, Y) )
-	).
-	
-
-clearCoordinatesFromDirection(D, X, Y) :-
-	translate(D, 0, 0, X1, Y1),
-	(myRole(digger) ->
-		(translate(D, X1, Y1, X, Y)) ;
-		(X = X1, Y = Y1)
-	).
-
-	
 closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	findall((Dist, Xr, Yr, Type, Details), 
 		(
@@ -1053,7 +965,14 @@ closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 		 Things),
 	Things \= [],
 	sort(Things, SortedThings),
-	member((_, Xr, Yr, Type, Details), SortedThings). 
+	member((_, Xr, Yr, Type, Details), SortedThings).
+	
+nearestRoleCell(X, Y) :-
+	findall((Dist, Xr, Yr),
+		(roleZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),
+		RoleCells),
+	sort(RoleCells, RoleCellsSorted),
+	RoleCellsSorted = [(_, X, Y) |_]. 
  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -1511,7 +1430,31 @@ findCommonTaskMaster(ConnectionUpdateList, NewConnections, CommonTaskMaster) :-
 
 taskMastersOrdered(TaskMasters_Ordered) :-
 	findall(TaskMaster, taskMaster(TaskMaster), TaskMasters),
-	list_to_ord_set(TaskMasters, TaskMasters_Ordered). 
+	list_to_ord_set(TaskMasters, TaskMasters_Ordered).
+	
+	
+
+findWaypoints([], []).
+findWaypoints(Path, Waypoints) :-
+	Path = [(MyX, MyY), (X, Y)|RemainingPath],
+	translate(D, MyX, MyY, X, Y),
+	findWaypoints_rec(D, (X, Y), RemainingPath, [], Waypoints).
+
+findWaypoints_rec(_, _, [], Waypoints, Waypoints).
+findWaypoints_rec(D, (X, Y), [(X, Y)|RemainingPath], FoundWaypoints, Waypoints) :-
+	!,
+	findWaypoints_rec(D, (X, Y), RemainingPath, FoundWaypoints, Waypoints).
+findWaypoints_rec(D, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
+	translate(D, X, Y, NextX, NextY),
+	!,
+	findWaypoints_rec(D, (NextX, NextY), RemainingPath, FoundWaypoints, Waypoints).
+
+findWaypoints_rec(_, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
+	translate(D, X, Y, NextX, NextY),
+	append(FoundWaypoints, [(X, Y)], NewFoundWaypoints),
+	findWaypoints_rec(D, (NextX, NextY), RemainingPath, NewFoundWaypoints, Waypoints).
+	
+	 
  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
