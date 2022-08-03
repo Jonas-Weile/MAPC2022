@@ -1,9 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CONNECTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Find all save connection requests from specific step
 getAllConnectionRequestsFromStep(Step, ConnectionRequests) :-
 	findall([AgentName, AgentX, AgentY, CEPs, Step],
 		connectionRequest(AgentName, AgentX, AgentY, CEPs, Step),
 		ConnectionRequests).
 
+% Order all the connected agents
 connectedAgentsOrdered(ConnectedAgents_ord) :-
 	findall(Agent, agentOffset(Agent, _, _), Agents),
 	list_to_ord_set(Agents, Agents_ord),
@@ -11,11 +12,10 @@ connectedAgentsOrdered(ConnectedAgents_ord) :-
 	ord_add_element(Agents_ord, MyName, ConnectedAgents_ord).
 	
 
-
 % Collect all environmentPercepts in the vision range of the other agent at (X, Y).
 % These can be things I can see, or permanent things I know of.  	
 identifyCommonEnvironmentPercepts(X, Y, Cep) :-
-	vision(VisionRange),
+	visionForRole(default, VisionRange),
 	findall(envPercept(Xe, Ye, Type), 
 		(  
 		   (  
@@ -259,6 +259,7 @@ newConnectionsOrdered(NewConnectionsOrdered) :-
 		),
 		NewConnections),
 	list_to_ord_set(NewConnections, NewConnectionsOrdered).
+
 
 oldConnectionsOrdered(OldConnectionsOrdered) :-
 	findall((Agent, OffsetX, OffsetY), 

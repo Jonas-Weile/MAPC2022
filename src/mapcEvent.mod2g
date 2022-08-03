@@ -18,25 +18,22 @@ use "modules/goals/updateGoals".
 module mapcEvent {
 	
 	% Restart the agent
-	if percept(step(0)),
-	   bel(restart)
+	if percept(step(0)), bel(restart)
 	then mapcInit + delete(restart).
 	
-	if bel(steps(NrOfSteps)),
-	   bel(LastStep is NrOfSteps - 1)
+	if bel(steps(NrOfSteps)), bel(LastStep is NrOfSteps - 1)
 	then {
-		% Reset the agent
-		if percept(step(LastStep)) 
-		then resetAgent + insert(restart) + print("Reset").
-			
+	
+		% Reset the agent on the last step
+		if percept(step(LastStep))  then resetAgent + insert(restart) + print("Resetting").
 			
 		if percept(step(S), S > 0, S < LastStep) then {
 			
-			if a-goal(fullyConnected) then receiveConnectionUpdates.	
+			% if a-goal(fullyConnected) then receiveConnectionUpdates.	
 		
 			if a-goal(fullyConnected ; findMapDimensions) then receiveConnectionRequests.
 			
-			if a-goal(fullyConnected) then sendConnectionUpdates.
+			% if a-goal(fullyConnected) then sendConnectionUpdates.
 							
 			if true then updateGoals.		
 					
@@ -48,9 +45,9 @@ module mapcEvent {
 			
 			if a-goal(fullyConnected ; findMapDimensions) then sendConnectionRequests.
 			
-			if bel(name(MyName), taskMaster(MyName)) then taskPlanning_TaskMaster.
+		%	if bel(name(MyName), taskMaster(MyName)) then taskPlanning_TaskMaster.
 			
-			if bel(taskMaster(_)), bel(name(MyName)), not(bel(taskMaster(MyName))) then taskPlanning_OtherAgents.			
+		%	if bel(taskMaster(_)), bel(name(MyName)), not(bel(taskMaster(MyName))) then taskPlanning_OtherAgents.			
 		
 			if a-goal(fullyConnected), not(bel(taskMaster(_))) then findTaskMaster.
 		}

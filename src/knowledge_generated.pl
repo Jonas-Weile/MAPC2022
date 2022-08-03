@@ -226,7 +226,7 @@ cellsInRange(X,Y, MinRange, MaxRange, Cells) :-
  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%% connections.pl 
+%% communication.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
 getAllConnectionRequestsFromStep(Step, ConnectionRequests) :-
 	findall([AgentName, AgentX, AgentY, CEPs, Step],
@@ -240,9 +240,8 @@ connectedAgentsOrdered(ConnectedAgents_ord) :-
 	ord_add_element(Agents_ord, MyName, ConnectedAgents_ord).
 	
 
-
 identifyCommonEnvironmentPercepts(X, Y, Cep) :-
-	vision(VisionRange),
+	visionForRole(default, VisionRange),
 	findall(envPercept(Xe, Ye, Type), 
 		(  
 		   (  
@@ -465,6 +464,7 @@ newConnectionsOrdered(NewConnectionsOrdered) :-
 		NewConnections),
 	list_to_ord_set(NewConnections, NewConnectionsOrdered).
 
+
 oldConnectionsOrdered(OldConnectionsOrdered) :-
 	findall((Agent, OffsetX, OffsetY), 
 		(
@@ -485,7 +485,6 @@ oldConnectionsOrdered(OldConnectionsOrdered) :-
 	completedClearAction/1,	% Clearing related beliefs
 	maxEnergy/1, 		% Maximum energy
 	myRole/1,		% Current role
-	vision/1,		% Vision radius
 	
 	name/1, team/1, teamSize/1, steps/1, role/6,
 	
@@ -980,7 +979,10 @@ nearestRoleCell(X, Y) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
  canAttach(Role) :-
  	role(Role, Vision, Actions, Speeds, ClearChance, ClearMaxDistance),
- 	member(attach, Actions). 
+ 	member(attach, Actions).
+ 	
+visionForRole(Role, Vision) :-
+	role(Role, Vision, _, _, _, _). 
  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 

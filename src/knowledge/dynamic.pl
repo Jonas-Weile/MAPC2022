@@ -6,7 +6,6 @@
 	completedClearAction/1,	% Clearing related beliefs
 	maxEnergy/1, 		% Maximum energy
 	myRole/1,		% Current role
-	vision/1,		% Vision radius
 	
 	% Initial percepts
 	name/1, team/1, teamSize/1, steps/1, role/6,

@@ -38,23 +38,19 @@ module receiveConnectionRequests {
 						   not(bel(agentOffset(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)))
 						then {
 							if not(bel(agentOffset(AgentName, _, _)))
-							then insert(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)).
+							then insert(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)) + print("new connection: ") + print(AgentName).
 							
 							%%% TODO %%%
 							if not(goal(fullyConnected)),
 							   bel(agentOffset(AgentName, OtherOffsetX, OtherOffsetY)),
 							   bel(findCircumferencesFromOffsets(OffsetX, OffsetY, OtherOffsetX, OtherOffsetY, L)),
 							   bel(findBestMapDimensions(L, MapDimensions))
-							then all.send!(newDimensions(MapDimensions)) +
-							     print(MapDimensions).
+							then all.send!(newDimensions(MapDimensions)) +	print(MapDimensions).
 						}
 						
 					}
 				}				
-			}
-			
-			if not(bel(teamSize(Len))) then print("I DID NOT RECEIVE ALL REQUESTS!!!").
-			
+			}			
 			
 			forall bel(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step))
 			do delete(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)).

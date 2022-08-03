@@ -1,5 +1,4 @@
 use "knowledge_generated" as knowledge.
-use "modules/main/goTo".
 use "modules/main/explore".
 use "modules/main/solveTask".
 use mapcActions.
@@ -17,21 +16,21 @@ module mapcMain {
 	then skip + print("Skipped step as TaskMaster").
 	
 	% We have a task to solve!
-	if bel(taskPlan(_, _, _, _, _, _, _)) then solveTask.
+	% if bel(taskPlan(_, _, _, _, _, _, _)) then solveTask.
 		
 	% Otherwise, explore
-	if true then explore.
+	if goal(explore) then explore.
 	
 	% We do not have a task, and we are not exploring, but are still connected to block(s)..
 	% Detach these blocks!
-	if bel(connectionFromTo(_, _, _)),
-	   bel(connectedBlocks(Dir1, _)),
-	   bel(translate(Dir1, 0, 0, X1, Y1)),
-	   bel(translate(_, X1, Y1, X2, Y2)),
-	   not(bel(X1 = X2, Y1 = Y2)),
-	   bel(thing(X2, Y2, block, _)),
-	   bel(attached(X2, Y2))
-	then disconnect(X1, Y1, X2, Y2) + print("disconnected: ", X1, Y1, X2, Y2).
+	% if bel(connectionFromTo(_, _, _)),
+	%    bel(connectedBlocks(Dir1, _)),
+	%    bel(translate(Dir1, 0, 0, X1, Y1)),
+	%    bel(translate(_, X1, Y1, X2, Y2)),
+	%    not(bel(X1 = X2, Y1 = Y2)),
+	%    bel(thing(X2, Y2, block, _)),
+	%    bel(attached(X2, Y2))
+	% then disconnect(X1, Y1, X2, Y2) + print("disconnected: ", X1, Y1, X2, Y2).
 	
 	% Skip - avoid no_action
 	if true then skip.

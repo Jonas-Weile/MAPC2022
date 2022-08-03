@@ -2,10 +2,6 @@ use "../../knowledge_generated" as knowledge.
 
 
 module updateGoals {
-	%%%%%%%%%%%%%%%%%%%% TASKS %%%%%%%%%%%%%%%%%%%%
-	
-
-	%%%%%%%%%%%%%%%%%%%% EXPLORING %%%%%%%%%%%%%%%%%%%%
 	%%% DROP GOALS %%%
 	if a-goal(fullyEquipped), not(bel(availableAttachmentSpot(_, _))) then drop(fullyEquipped).
 	
@@ -25,9 +21,4 @@ module updateGoals {
 	if goal(explore) then {
 		if not(goal(fullyEquipped)), bel(availableAttachmentSpot(_, _)) then adopt(fullyEquipped).
 	}
-	
-	if bel(teamSize(TeamSize), TeamSize > 30),
-	   bel(step(S), S = 6)
-	then adopt(fullyConnected) +
-	     adopt(findMapDimensions).
 }
