@@ -1,37 +1,3 @@
-% If we move closer, it must be constructive.
-constructiveMove(_, _, _) :-
-	thing(Xc, Yc, marker, clear); thing(Xc, Yc, marker, ci).
-
-constructiveMove(GoalXr, GoalYr, Dir)  :-
-	translate(Dir, 0, 0, Xr, Yr),
-	not(recentlyVisited(Xr, Yr)),
-	distanceBetweenPoints_Manhattan(0, 0, GoalXr, GoalYr, MyDist),
-	distanceBetweenPoints_Manhattan(Xr, Yr, GoalXr, GoalYr, DistAfterMove),
-	DistAfterMove < MyDist,
-	!.
-
-% If we move along an obstacle, then it is constructive
-constructiveMove(GoalXr, GoalYr, Dir)  :-
-	translate(Dir, 0, 0, Xr, Yr),
-	not(recentlyVisited(Xr, Yr)),
-	distanceBetweenPoints_Manhattan(0, 0, GoalXr, GoalYr, MyDist),
-	impassableObjectClose(0, 0, Xo, Yo),
-	impassableObjectClose(Xr, Yr, Xo, Yo),
-	distanceBetweenPoints_Manhattan(Xo, Yo, GoalXr, GoalYr, ObjectDist),
-	ObjectDist < MyDist,
-	!.
-
-recentlyVisited(Xr, Yr) :-
-	step(CurrentStep),
-	relativeToAbsolutePositionOfCoordinates(Xr, Yr, X, Y),
-	visited(X, Y, Step),
-	2 < CurrentStep - Step.	
-
-impassableObjectClose(X, Y, Xobject, Yobject) :-
-	surroundingCells(X, Y, SurroundingCells),
-	member((Xobject, Yobject), SurroundingCells), 
-	impassable(Xobject, Yobject).
-
 % astar(+X,+Y,-Path, -Actions) - Starts A-star, Path will include a complete path to (GoalX,GoalY), Actions include what actions the agent must perform. 
 % The astar will only succeed if we find a goalpoint closer than we started
 astarNoClear(GoalXr,GoalYr,Path, Actions) :- 
@@ -48,11 +14,6 @@ astarNoClear(GoalXr,GoalYr,Path, Actions) :-
     reverse([(FinalX, FinalY)|RevPath], Path_relative),
     maplist(relativeToAbsolutePositionOfPoints, Path_relative, Path),
     reverse(RevActions, Actions).
-    
-    
-   
-clearGuard :-
-	(obstacle(X, Y) ; ( thing(X, Y, block, _), not(attached(X, Y))) ).
 
 astarClear(GoalXr, GoalYr, Path, Actions) :- 
     empty_heap(Frontier),
@@ -90,7 +51,6 @@ astarRecursiveClear(GoalX,GoalY,Frontier, _, [(X,Y)| Path], CompleteActions) :-
 		distMan(0, 0, X, Y, 5)
 	),	
     !.
-    
    
 	
 astarRecursiveNoClear(GoalX,GoalY,Frontier, ExpandedStates, CompletePath, CompleteActions) :-

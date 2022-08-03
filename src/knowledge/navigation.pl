@@ -128,7 +128,7 @@ availableAttachmentSpot(Xr, Yr) :-
 
 % Return all things attached to the agent.
 getAttachments(Attachments) :-
-	findall(attachedToMe(X, Y, block, BlockType), _, Attachments).
+	findall(attachedToMe(X, Y, block, BlockType), attachedToMe(X, Y, block, BlockType), Attachments).
 	
 % True if the agent must rotate in order to attach an object at the relative location (Xr, Yr).
 rotationRequiredToAttach(Xr, Yr) :-
@@ -254,7 +254,7 @@ goToAction(Xr, Yr, Action, Params) :-
 	findall((Score, D, Action, Params),
 		(moveDirection(D, Penalty, Action, Params), 
 			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
-			Score is (DScore + EScore + SScore)
+			DScore >= 0, Score is (DScore + EScore + SScore)
 		), 
 	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
@@ -279,3 +279,10 @@ closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	Things \= [],
 	sort(Things, SortedThings),
 	member((_, Xr, Yr, Type, Details), SortedThings).
+	
+nearestRoleCell(X, Y) :-
+	findall((Xr, Yr, Dist),
+		(roleZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),
+		RoleCells),
+	sort(RoleCells, RoleCellsSorted),
+	RoleCellsSorted = [(X, Y, _) |_].
