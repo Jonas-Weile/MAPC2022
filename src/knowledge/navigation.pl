@@ -252,8 +252,8 @@ exploreAction(Action, Params) :-
 goToAction(Xr, Yr, Action, Params) :-
 	findall((Score, D, Action, Params),
 		(moveDirection(D, Penalty, Action, Params), 
-			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
-			DScore >= 0, Score is (DScore + EScore + SScore)
+			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
+			DScore >= 0, Score is (DScore + DisruptScore + EScore + SScore)
 		), 
 	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
@@ -280,8 +280,8 @@ closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	member((_, Xr, Yr, Type, Details), SortedThings).
 	
 nearestRoleCell(X, Y) :-
-	findall((Xr, Yr, Dist),
+	findall((Dist, Xr, Yr),
 		(roleZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),
 		RoleCells),
 	sort(RoleCells, RoleCellsSorted),
-	RoleCellsSorted = [(X, Y, _) |_].
+	RoleCellsSorted = [(_, X, Y) |_].
