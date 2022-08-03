@@ -27,7 +27,6 @@
 	
 	
 	%%%%%% COMMUNICATION %%%%%%
-	commonEnvironmentPercepts/3,
 	savedCommonEnvironmentPercepts/3,
 	
 	% agentOffset(Agent, OffsetX, OffsetY)
@@ -37,7 +36,7 @@
 	newConnection/3,
 	
 	% Connections
-	connectionRequest/5,
+	connectionRequest/4,
 	connectionUpdate/1,
 	connectionToInfo/2, 
 	newConnections/3,

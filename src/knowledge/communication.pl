@@ -1,74 +1,5 @@
-% Find all save connection requests from specific step
-getAllConnectionRequestsFromStep(Step, ConnectionRequests) :-
-	findall([AgentName, AgentX, AgentY, CEPs, Step],
-		connectionRequest(AgentName, AgentX, AgentY, CEPs, Step),
-		ConnectionRequests).
-
-% Order all the connected agents
-connectedAgentsOrdered(ConnectedAgents_ord) :-
-	findall(Agent, agentOffset(Agent, _, _), Agents),
-	list_to_ord_set(Agents, Agents_ord),
-	name(MyName),
-	ord_add_element(Agents_ord, MyName, ConnectedAgents_ord).
-	
-
-% Collect all environmentPercepts in the vision range of the other agent at (X, Y).
-% These can be things I can see, or permanent things I know of.  	
-identifyCommonEnvironmentPercepts(X, Y, Cep) :-
-	visionForRole(default, VisionRange),
-	findall(envPercept(Xe, Ye, Type), 
-		(  
-		   (  
-		      thing(Xe, Ye, Type, _);
-		      (obstacle(Xe, Ye), Type = obstacle);
-		      (goalZone(Xe, Ye), Type = goalZone);
-		      (roleZone(Xe, Ye), Type = roleZone)
-		   ),
-		   % Exclude the agent itself
-		   (Xe, Ye) \= (X, Y),
-		   
-		   % Only condsider things within the visionrange of both agents
-		   distanceBetweenPoints_Manhattan(X, Y, Xe, Ye, D1), D1 =< VisionRange,
-		   distanceBetweenPoints_Manhattan(0, 0, Xe, Ye, D2), D2 =< VisionRange		   
-		), 
-		Cep
-	       ).
-		
-
-uniqueConnectionRequests(Requests, UniqueRequests) :-
-	% First, find all nonempty Requests
-	findall((Agent, AgentX, AgentY, Xr, Yr, CEP),
-		(
-		   member(Request, Requests),
-		   Request = [Agent, AgentX, AgentY, CEPs, _],
-		   member([Xr, Yr, CEP], CEPs),
-		   CEP \= []
-		),
-		NonEmptyRequests),
-	
-	% Now, filter out any request with duplicates
-	findall(Request,
-		(
-		   member((Agent, AgentX, AgentY, Xr, Yr, CEP), NonEmptyRequests),
-		   not(( 
-		   	member((OtherAgent, _, _, Xr, Yr, OtherCEP), NonEmptyRequests),
-		   	OtherAgent \= Agent,
-		   	sort(CEP, CEPsorted),
-		   	sort(OtherCEP, CEPsorted)
-		   )),
-		   Request = (Agent, AgentX, AgentY, Xr, Yr, CEP)
-		),
-		UniqueRequests).
-		
-
-		
-matchingEnvironmentPercepts([], [], _, _).
-matchingEnvironmentPercepts([envPercept(Xe, Ye, Type)|Cep1], Cep2, X, Y) :-
-	Xe2 is Xe+X, Ye2 is Ye+Y,
-	select(envPercept(Xe2, Ye2, Type), Cep2, Cep2Rest),
-	matchingEnvironmentPercepts(Cep1, Cep2Rest, X, Y).
-
-
+% Find all the adjacent agents with no other agent closer to them than the current agent.
+%	The purpose of this method is to minimize the number of sent connection requests.
 findAdjacentAgents(Agents) :-
 	findall((Dist, Xr, Yr), 
 		(
@@ -87,6 +18,99 @@ findAdjacentAgents([(Dist1, X1, Y1)|T], NotConnected, Connected, AdjacentAgents)
   	) ->
 		findAdjacentAgents(T, [(X1, Y1)|NotConnected], Connected, AdjacentAgents);
 		findAdjacentAgents(T, NotConnected,[(X1, Y1)|Connected], AdjacentAgents).
+		
+		
+		
+% Collect all environmentPercepts in the vision range of the other agent at (Xr, Yr).
+% These can be things I can see, or permanent things I know of.  	
+identifyCommonEnvironmentPercepts(Xr, Yr, Cep) :-
+	visionForRole(default, VisionRange),
+	findall(envPercept(Xe, Ye, Type), 
+		(  
+		   (  
+		      thing(Xe, Ye, Type, _);
+		      (obstacle(Xe, Ye), Type = obstacle);
+		      (goalZone(Xe, Ye), Type = goalZone);
+		      (roleZone(Xe, Ye), Type = roleZone)
+		   ),
+		   % Exclude the agent itself
+		   (Xe, Ye) \= (Xr, Yr),
+		   
+		   % Only condsider things within the visionrange of both agents
+		   distMan(Xr, Yr, Xe, Ye, D1), D1 =< VisionRange,
+		   distMan(0, 0, Xe, Ye, D2), D2 =< VisionRange		   
+		), 
+		Cep
+	       ).
+	       
+	       	
+% Find all saved connection requests from specific step
+getAllConnectionRequestsFromStep(Step, ConnectionRequests, Len) :-
+	findall([AgentName, AgentCoordinates, CEPs, Step],
+		connectionRequest(AgentName, AgentCoordinates, CEPs, Step),
+		ConnectionRequests),
+	length(ConnectionRequests, Len).
+
+
+% Sieve the connection requests to find only the unique ones.
+% The connection requests has the following form:
+%
+%	[AgentName, AgentX, AgentY, CEPs, Step]
+%
+%	where:
+%	   - AgentName: Agent that sent the request.
+%	   - AgentX:    X-coordinate of the agent that sent the request.
+%	   - AgentY:    Y-coordinate of the agent that sent the request.
+%	   - CEPs:      List of common environment percepts. 
+%			Each CEP has the form [Xr, Yr, [envPercept(Xe, Ye, Type) |...]].
+%	   - Step:      The step in which the request was sent.
+uniqueConnectionRequests(Requests, UniqueRequests) :-
+	% First, find all nonempty Requests
+	findall((Agent, AgentX, AgentY, Xr, Yr, CEP),
+		(
+		   member([Agent, [AgentX, AgentY], [Xr, Yr, CEP], _], Requests),
+		   CEP \= []
+		),
+		NonEmptyRequests),
+	
+	% Now, filter out any request with duplicates
+	findall((Agent, AgentX, AgentY, Xr, Yr, CEP),
+		(
+		   member((Agent, AgentX, AgentY, Xr, Yr, CEP), NonEmptyRequests),
+		   not(( 
+		   	member((OtherAgent, _, _, Xr, Yr, OtherCEP), NonEmptyRequests),
+		   	OtherAgent \= Agent,
+		   	sort(CEP, CEPsorted),
+		   	sort(OtherCEP, CEPsorted)
+		   ))
+		),
+		UniqueRequests).
+
+
+% Check whether the environment-percept matches one of the saved ones.
+matchingEnvironmentPercepts(Xr, Yr, CEP, Step, MyX, MyY) :-
+	savedCommonEnvironmentPercepts((MyX, MyY), (X, Y, MyCEP), Step),
+	X is -Xr, Y is -Yr,
+	matchEnvironmentPercepts(CEP, MyCEP, X, Y).
+	
+matchEnvironmentPercepts([], [], _, _).
+matchEnvironmentPercepts([envPercept(Xe, Ye, Type)|Cep1Rest], Cep2, X, Y) :-
+	Xe2 is Xe+X, Ye2 is Ye+Y,
+	select(envPercept(Xe2, Ye2, Type), Cep2, Cep2Rest),
+	matchEnvironmentPercepts(Cep1Rest, Cep2Rest, X, Y).
+
+
+% Order all the connected agents
+connectedAgentsOrdered(ConnectedAgents_ord) :-
+	findall(Agent, agentOffset(Agent, _, _), Agents),
+	list_to_ord_set(Agents, Agents_ord),
+	name(MyName),
+	ord_add_element(Agents_ord, MyName, ConnectedAgents_ord).
+		
+
+		
+
+
 
 
 savedConnectionUpdates(SavedUpdates) :-

@@ -48,9 +48,8 @@ module resetAgent {
 	forall bel(thing(X, Y, Type, Details)) do delete(thing(X, Y, Type, Details)).
 	forall bel(newConnection(Agent, X, Y)) do delete(newConnection(Agent, X, Y)).
 	forall bel(connectionFromTo(X2, Y2, Agent)) do delete(connectionFromTo(X2, Y2, Agent)).
-	forall bel(commonEnvironmentPercepts(X, Y, Cep)) do delete(commonEnvironmentPercepts(X, Y, Cep)).
 	forall bel(savedCommonEnvironmentPercepts(MyPosition, CEP, Step)) do delete(savedCommonEnvironmentPercepts(MyPosition, CEP, Step)).
-	forall bel(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)) do delete(connectionRequest(AgentName, AgentX, AgentY, CEPs, Step)).
+	forall bel(connectionRequest(AgentName, AgentCoordinates, CEPs, Step)) do delete(connectionRequest(AgentName, AgentCoordinates, CEPs, Step)).
 	
 	if bel(taskMaster(TM)) then delete(taskMaster(TM)).
 	if bel(poloidalCircumference(PC)) then delete(poloidalCircumference(PC)).

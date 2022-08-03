@@ -12,23 +12,14 @@ module sendConnectionRequests {
 			forall bel(member((Xr, Yr), AdjacentAgents)), 
 				   bel(identifyCommonEnvironmentPercepts(Xr, Yr, CEP)), 
 				   bel(CEP \= []) 	
-				   	
 			do insert(savedCommonEnvironmentPercepts((MyX, MyY), (Xr, Yr, CEP), Step)) +
-			   insert(commonEnvironmentPercepts(Xr, Yr, CEP)).	     
+			   (explore).send?(connectionRequest(MyName, [MyX, MyY], [Xr, Yr, CEP], Step)).  
 		}   
-	
-		% Send all found CEP's
-		listall CEPs <- bel(commonEnvironmentPercepts(Xr, Yr, CEP))
-			 do (explore).send?(connectionRequest(MyName, MyX, MyY, CEPs, Step)).	
 		
 		% Send empty update if we didn't find any other agents that we could connect to.
-		if not(bel(commonEnvironmentPercepts(_, _, _))) 
-			then (explore).send?(connectionRequest(MyName, MyX, MyY, [0, 0, []], Step)). 
-	}
-	
-	% delete common environment percepts
-	forall bel(commonEnvironmentPercepts(AnyX, AnyY, AnyCEP)) do
-		delete(commonEnvironmentPercepts(AnyX, AnyY, AnyCEP)).
+		if not(bel(savedCommonEnvironmentPercepts(_, _, Step))) 
+			then (explore).send?(connectionRequest(MyName, [MyX, MyY], [], Step)). 
+	}	
 }	
 
 
