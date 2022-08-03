@@ -105,7 +105,6 @@ module updateBeliefState {
 			   bel(ClearEnergyCost is (OldEnergy - NewEnergy - 1)/ClearSteps) 
 			then {
 				if true then delete(completedClearAction(OldEnergy)).
-				if bel(clearing(X, Y)) then delete(clearing(X, Y)).
 				if true then delete(clearStepsCounter(ClearSteps)) + insert(clearStepsCounter(0)).
 				if bel(clearSteps(OldSteps), OldSteps =\= ClearSteps)  then delete(clearSteps(OldSteps)) + insert(clearSteps(ClearSteps)).
 				if bel(clearEnergyCost(ActionCost), ActionCost =\= ClearEnergyCost)  then delete(clearEnergyCost(ActionCost)) + insert(clearEnergyCost(ClearEnergyCost)).

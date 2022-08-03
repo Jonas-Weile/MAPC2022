@@ -31,14 +31,14 @@ module explore {
 	}
 	
 	% If I see a role zone, change to a new role better suited for exploring!
-	if bel(myRole(MyRole)), not(bel(canAttach(MyRole))), bel(roleZone(Xr, Yr)) then {
+	if bel(myRole(MyRole)), not(bel(canAttach(MyRole))), bel(roleZone(_, _)) then {
 	
 		% Change role if we are in a roleZone
 		%% OBS. For now, we hard-code the worker role
 		if bel(roleZone(0, 0)) then adapt(worker).
 	
 		% Go towards the roleZone
-		if bel(goToAction(Xr, Yr, Action, Params)) 
+		if bel(nearestRoleCell(Xr, Yr), goToAction(Xr, Yr, Action, Params)) 
 		then {
 			if bel(Action = move, [D] = Params) then move(D).
 			if bel(Action = rotate, [R] = Params) then rotate(R).
@@ -53,4 +53,9 @@ module explore {
 			if bel(Action = rotate, [R] = Params) then rotate(R).
 			if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
 	}
+	
+	% TODO
+	% I'm stuck!
+	% This only happens if I have two attachments - detach one of them
+	% ...
 }

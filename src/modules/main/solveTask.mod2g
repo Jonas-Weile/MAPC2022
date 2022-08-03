@@ -1,11 +1,12 @@
 use "../../mapcActions" as actionspec.
 use "../../knowledge_generated" as knowledge.
-use "./move".
+use "./goTo" as module.
 
 module solveTask {
 	if bel(name(MyName)),
 	   bel(taskPlan(_, TaskName, _, _, BlockType, BlockQty, Connections))
 	then {
+	
 		if bel(taskPlanToDo([CurrentToDo|_])) then {
 		
 			% Our task is to attach to a block
@@ -22,7 +23,7 @@ module solveTask {
 				if bel(closestBlockOrDispenserInVision(Xr, Yr, _, BlockType)) then {
 					% If we are at the dispenser, 
 					if bel(translate(_, 0, 0, Xr, Yr), rotationRequiredToAttach(Xr, Yr)) then {
-						if bel(possibleRotation(Xr, Yr, R)) then rotate(R).
+						if bel(possibleRotationToAttach(Xr, Yr, R)) then rotate(R).
 						if bel(validDirection(D)) then move(D).
 					}
 			
@@ -33,12 +34,12 @@ module solveTask {
 						then request(Dir).
 						
 					if true
-					then insert(goTo(Xr, Yr)) + move. 
+					then insert(goTo(Xr, Yr)) + goTo. 
 				}
 			
 				% We are not next to the dispenser
 				if true
-				then insert(goTo(Xdr, Ydr)) + move. 
+				then insert(goTo(Xdr, Ydr)) + goTo. 
 			}
 					
 			
@@ -75,7 +76,7 @@ module solveTask {
 					     
 					% Move towards goalcell
 					if true
-					then insert(goTo(Xgcr, Ygcr)) + move. 
+					then insert(goTo(Xgcr, Ygcr)) + goTo. 
 				}
 				
 				
@@ -105,7 +106,7 @@ module solveTask {
 						}
 							
 						if true
-						then insert(goTo(GoToXr, GoToYr)) + move.
+						then insert(goTo(GoToXr, GoToYr)) + goTo.
 					}
 										
 				}

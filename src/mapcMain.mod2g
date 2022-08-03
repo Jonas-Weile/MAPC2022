@@ -1,5 +1,5 @@
 use "knowledge_generated" as knowledge.
-use "modules/main/move".
+use "modules/main/goTo".
 use "modules/main/explore".
 use "modules/main/solveTask".
 use mapcActions.

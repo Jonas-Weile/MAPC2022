@@ -128,7 +128,7 @@ availableAttachmentSpot(Xr, Yr) :-
 
 % Return all things attached to the agent.
 getAttachments(Attachments) :-
-	findall(attachedToMe(X, Y, block, BlockType), _, Attachments).
+	findall(attachedToMe(X, Y, block, BlockType), attachedToMe(X, Y, block, BlockType), Attachments).
 	
 % True if the agent must rotate in order to attach an object at the relative location (Xr, Yr).
 rotationRequiredToAttach(Xr, Yr) :-
@@ -174,11 +174,10 @@ disruptScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 
-distanceScore(D, X_target, Y_target, Score) :-
-	myPosition(MyX, MyY),
-	distanceBetweenPoints_Manhattan(MyX, MyY, X_target, Y_target, CurrentDistance),
-	translate(D, MyX, MyY, X_new, Y_new),
-	distanceBetweenPoints_Manhattan(X_new, Y_new, X_target, Y_target, NewDistance),
+distanceScore(D, Xr, Yr, Score) :-
+	distMan(0, 0, Xr, Yr, CurrentDistance),
+	translate(D, 0, 0, X_new, Y_new),
+	distMan(X_new, Y_new, Xr, Yr, NewDistance),
 	Score is CurrentDistance - NewDistance.
 
 safeScore(D, Score) :-
@@ -253,8 +252,8 @@ exploreAction(Action, Params) :-
 goToAction(Xr, Yr, Action, Params) :-
 	findall((Score, D, Action, Params),
 		(moveDirection(D, Penalty, Action, Params), 
-			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
-			Score is (DScore + EScore + SScore)
+			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
+			DScore >= 0, Score is (DScore + DisruptScore + EScore + SScore)
 		), 
 	    	 DirectionValueList),
 	reverseSort(DirectionValueList, DirectionValueListSorted),
@@ -279,3 +278,10 @@ closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	Things \= [],
 	sort(Things, SortedThings),
 	member((_, Xr, Yr, Type, Details), SortedThings).
+	
+nearestRoleCell(X, Y) :-
+	findall((Dist, Xr, Yr),
+		(roleZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),
+		RoleCells),
+	sort(RoleCells, RoleCellsSorted),
+	RoleCellsSorted = [(_, X, Y) |_].
