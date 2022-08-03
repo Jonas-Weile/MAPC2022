@@ -22,11 +22,11 @@ module explore {
 				then request(Dir).
 		
 			% We are not next to block nor dispenser, but we have our eyes on the prize
-			if bel(goToAction(Xr, Yr, Action)) 
+			if bel(goToAction(Xr, Yr, Action, Params)) 
 			then {
-				if bel(Action = move(D)) then move(D).
-				if bel(Action = rotate(R)) then rotate(R).
-				if bel(Action = clear(Xc, Yc)) then clear(Xc, Yc).
+				if bel(Action = move, [D] = Params) then move(D).
+				if bel(Action = rotate, [R] = Params) then rotate(R).
+				if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
 			}
 		}
 	}
@@ -39,21 +39,21 @@ module explore {
 		if bel(roleZone(0, 0)) then adapt(worker).
 	
 		% Go towards the roleZone
-		if bel(goToAction(Xr, Yr, Action)) 
+		if bel(goToAction(Xr, Yr, Action, Params)) 
 		then {
-			if bel(Action = move(D)) then move(D).
-			if bel(Action = rotate(R)) then rotate(R).
-			if bel(Action = clear(Xc, Yc)) then clear(Xc, Yc).
+			if bel(Action = move, [D] = Params) then move(D).
+			if bel(Action = rotate, [R] = Params) then rotate(R).
+			if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
 		}
 	}
 	
 	
 	% .. Otherwise, keep on exploring
 	if goal(explore) then {
-		if bel(exploreAction(Action)) then {
-				if bel(Action = move(D)) then move(D).
-				if bel(Action = rotate(R)) then rotate(R).
-				if bel(Action = clear(Xc, Yc)) then clear(Xc, Yc).
+		if bel(exploreAction(Action, Params)) then {
+				if bel(Action = move, [D] = Params) then move(D).
+				if bel(Action = rotate, [R] = Params) then rotate(R).
+				if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
 		}
 	}
 }

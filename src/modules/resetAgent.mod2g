@@ -15,6 +15,7 @@ module resetAgent {
 	if bel(myPosition(X, Y)) then delete(myPosition(X, Y)).
 		
 	% Delete all beliefs
+	forall bel(steps(S)) do delete(steps(S)).
 	forall bel(myRole(R)) do delete(myRole(R)).
 	forall bel(share(X)) do delete(share(X)).
 	forall bel(accepted(X)) do delete(accepted(X)).
