@@ -105,21 +105,13 @@ rotateAttachments(R, Attachments, AttachmentsRotated) :-
 			member(attachedToMe(X, Y, block, BlockType), Attachments), 
 			rotation90(R, X, Y, Xr, Yr)
 		), 
-		AttachmentsRotated).
-	
-% Return all things attached to the agent.
-getAttachments(Attachments) :-
-	findall(attachedToMe(X, Y, block, BlockType), _, Attachments).
-	
+		AttachmentsRotated).	
 	
 
 % True if the agent can attach a block at the relative position (Xr, Yr).
 % An agent can only attach two blocks on opposite sides.
-availableAttachmentSpot(Xr, Yr) :- 
-	% Find all attachments
-	findall(attachedToMe(Xa, Ya, Type, Details),
-		attachedToMe(Xa, Ya, Type, Details),
-		Attachments),
+availableAttachmentSpot(Xr, Yr) :-
+	getAttachments(Attachments),
 		
 	% If nothing attached, then any spot is fine
 	(
@@ -128,11 +120,15 @@ availableAttachmentSpot(Xr, Yr) :-
 			;
 			% Otherwise, it should be opposite the block already attached
 			(
-				[attachedToMe(Xa, Ya, Type, Details)] = Attachments,
+				[attachedToMe(Xa, Ya, _, _)] = Attachments,
 				rotation180(cw, Xa, Ya, Xr, Yr)
 			)
 	).
 
+
+% Return all things attached to the agent.
+getAttachments(Attachments) :-
+	findall(attachedToMe(X, Y, block, BlockType), _, Attachments).
 	
 % True if the agent must rotate in order to attach an object at the relative location (Xr, Yr).
 rotationRequiredToAttach(Xr, Yr) :-
@@ -140,7 +136,7 @@ rotationRequiredToAttach(Xr, Yr) :-
 			
 			
 % Find a possible rotation
-possibleRotation(Xr, Yr, R) :-
+possibleRotationToAttach(Xr, Yr, R) :-
 	availableAttachmentSpot(Xa, Ya),
 	rotation(R, Xa, Ya, Xr, Yr, Angle),
 	% check if we have to rotate 90 or 180 degrees.

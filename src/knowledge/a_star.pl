@@ -1,5 +1,3 @@
-
-
 % If we move closer, it must be constructive.
 constructiveMove(_, _, _) :-
 	thing(Xc, Yc, marker, clear); thing(Xc, Yc, marker, ci).
@@ -33,27 +31,6 @@ impassableObjectClose(X, Y, Xobject, Yobject) :-
 	surroundingCells(X, Y, SurroundingCells),
 	member((Xobject, Yobject), SurroundingCells), 
 	impassable(Xobject, Yobject).
-
-findWaypoints([], []).
-findWaypoints(Path, Waypoints) :-
-	Path = [(MyX, MyY), (X, Y)|RemainingPath],
-	translate(D, MyX, MyY, X, Y),
-	findWaypoints_rec(D, (X, Y), RemainingPath, [], Waypoints).
-
-findWaypoints_rec(_, _, [], Waypoints, Waypoints).
-findWaypoints_rec(D, (X, Y), [(X, Y)|RemainingPath], FoundWaypoints, Waypoints) :-
-	!,
-	findWaypoints_rec(D, (X, Y), RemainingPath, FoundWaypoints, Waypoints).
-findWaypoints_rec(D, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
-	translate(D, X, Y, NextX, NextY),
-	!,
-	findWaypoints_rec(D, (NextX, NextY), RemainingPath, FoundWaypoints, Waypoints).
-
-findWaypoints_rec(_, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
-	translate(D, X, Y, NextX, NextY),
-	append(FoundWaypoints, [(X, Y)], NewFoundWaypoints),
-	findWaypoints_rec(D, (NextX, NextY), RemainingPath, NewFoundWaypoints, Waypoints).
-	
 
 % astar(+X,+Y,-Path, -Actions) - Starts A-star, Path will include a complete path to (GoalX,GoalY), Actions include what actions the agent must perform. 
 % The astar will only succeed if we find a goalpoint closer than we started

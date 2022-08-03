@@ -493,3 +493,27 @@ findCommonTaskMaster(ConnectionUpdateList, NewConnections, CommonTaskMaster) :-
 taskMastersOrdered(TaskMasters_Ordered) :-
 	findall(TaskMaster, taskMaster(TaskMaster), TaskMasters),
 	list_to_ord_set(TaskMasters, TaskMasters_Ordered).
+	
+	
+
+findWaypoints([], []).
+findWaypoints(Path, Waypoints) :-
+	Path = [(MyX, MyY), (X, Y)|RemainingPath],
+	translate(D, MyX, MyY, X, Y),
+	findWaypoints_rec(D, (X, Y), RemainingPath, [], Waypoints).
+
+findWaypoints_rec(_, _, [], Waypoints, Waypoints).
+findWaypoints_rec(D, (X, Y), [(X, Y)|RemainingPath], FoundWaypoints, Waypoints) :-
+	!,
+	findWaypoints_rec(D, (X, Y), RemainingPath, FoundWaypoints, Waypoints).
+findWaypoints_rec(D, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
+	translate(D, X, Y, NextX, NextY),
+	!,
+	findWaypoints_rec(D, (NextX, NextY), RemainingPath, FoundWaypoints, Waypoints).
+
+findWaypoints_rec(_, (X, Y), [(NextX, NextY)|RemainingPath], FoundWaypoints, Waypoints) :-
+	translate(D, X, Y, NextX, NextY),
+	append(FoundWaypoints, [(X, Y)], NewFoundWaypoints),
+	findWaypoints_rec(D, (NextX, NextY), RemainingPath, NewFoundWaypoints, Waypoints).
+	
+	

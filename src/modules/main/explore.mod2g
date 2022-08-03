@@ -8,10 +8,9 @@ module explore {
 		
 		% We have found a block/dispenser
 		if bel(closestBlockOrDispenserInVision(Xr, Yr, _, _)) then {
+			% If we must rotate, do so if possible, or move in *some* direction
 			if bel(adjacent(0, 0, Xr, Yr), rotationRequiredToAttach(Xr, Yr)) then {
-			
-				if bel(possibleRotation(Xr, Yr, R)) then rotate(R).
-				
+				if bel(possibleRotationToAttach(Xr, Yr, R)) then rotate(R).
 				if bel(validDirection(D)) then move(D).
 			}			
 			
@@ -49,11 +48,9 @@ module explore {
 	
 	
 	% .. Otherwise, keep on exploring
-	if goal(explore) then {
-		if bel(exploreAction(Action, Params)) then {
-				if bel(Action = move, [D] = Params) then move(D).
-				if bel(Action = rotate, [R] = Params) then rotate(R).
-				if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
-		}
+	if bel(exploreAction(Action, Params)) then {
+			if bel(Action = move, [D] = Params) then move(D).
+			if bel(Action = rotate, [R] = Params) then rotate(R).
+			if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
 	}
 }
