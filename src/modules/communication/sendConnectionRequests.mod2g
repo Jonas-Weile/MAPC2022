@@ -9,11 +9,12 @@ module sendConnectionRequests {
 		if bel(findAdjacentAgents(AdjacentAgents)) then {
 			
 			% For each agent, find all common Environment percepts, send these to all explorers, and save them
-			forall bel(member((Xr, Yr), AdjacentAgents)), 
-				   bel(identifyCommonEnvironmentPercepts(Xr, Yr, CEP)), 
-				   bel(CEP \= []) 	
-			do insert(savedCommonEnvironmentPercepts((MyX, MyY), (Xr, Yr, CEP), Step)) +
-			   (explore).send?(connectionRequest(MyName, [MyX, MyY], [Xr, Yr, CEP], Step)).  
+			forall bel(member((Xr, Yr), AdjacentAgents))
+			do {
+				if   bel(identifyCommonEnvironmentPercepts(Xr, Yr, CEP)), bel(CEP \= []) 	
+				then insert(savedCommonEnvironmentPercepts([MyX, MyY], [Xr, Yr, CEP], Step)) +
+				     (explore).send?(connectionRequest(MyName, [MyX, MyY], [Xr, Yr, CEP], Step)).
+		    }  
 		}   
 		
 		% Send empty update if we didn't find any other agents that we could connect to.

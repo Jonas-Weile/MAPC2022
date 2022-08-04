@@ -25,7 +25,7 @@ findAdjacentAgents([(Dist1, X1, Y1)|T], NotConnected, Connected, AdjacentAgents)
 % These can be things I can see, or permanent things I know of.  	
 identifyCommonEnvironmentPercepts(Xr, Yr, Cep) :-
 	visionForRole(default, VisionRange),
-	findall(envPercept(Xe, Ye, Type), 
+	findall([Xe, Ye, Type], 
 		(  
 		   (  
 		      thing(Xe, Ye, Type, _);
@@ -62,7 +62,7 @@ getAllConnectionRequestsFromStep(Step, ConnectionRequests, Len) :-
 %	   - AgentX:    X-coordinate of the agent that sent the request.
 %	   - AgentY:    Y-coordinate of the agent that sent the request.
 %	   - CEPs:      List of common environment percepts. 
-%			Each CEP has the form [Xr, Yr, [envPercept(Xe, Ye, Type) |...]].
+%			Each CEP has the form [Xr, Yr, [[Xe, Ye, Type] |...]].
 %	   - Step:      The step in which the request was sent.
 uniqueConnectionRequests(Requests, UniqueRequests) :-
 	% First, find all nonempty Requests
@@ -89,17 +89,21 @@ uniqueConnectionRequests(Requests, UniqueRequests) :-
 
 % Check whether the environment-percept matches one of the saved ones.
 matchingEnvironmentPercepts(Xr, Yr, CEP, Step, MyX, MyY) :-
-	savedCommonEnvironmentPercepts((MyX, MyY), (X, Y, MyCEP), Step),
 	X is -Xr, Y is -Yr,
+	savedCommonEnvironmentPercepts([MyX, MyY], [X, Y, MyCEP], Step),
 	matchEnvironmentPercepts(CEP, MyCEP, X, Y).
 	
-matchEnvironmentPercepts([], [], _, _).
-matchEnvironmentPercepts([envPercept(Xe, Ye, Type)|Cep1Rest], Cep2, X, Y) :-
-	Xe2 is Xe+X, Ye2 is Ye+Y,
-	select(envPercept(Xe2, Ye2, Type), Cep2, Cep2Rest),
-	matchEnvironmentPercepts(Cep1Rest, Cep2Rest, X, Y).
-
-
+matchEnvironmentPercepts(CEP1, CEP2, X, Y) :-
+	findall([X2, Y2, Type],
+		(
+			member([X1, Y1, Type], CEP1),
+			X2 is X1+X, Y2 is Y1+Y
+		),
+		CEP_translated),
+	sort(CEP2, CEP2_sorted),
+	sort(CEP_translated, CEP2_sorted).
+	
+	
 % Order all the connected agents
 connectedAgentsOrdered(ConnectedAgents_ord) :-
 	findall(Agent, agentOffset(Agent, _, _), Agents),

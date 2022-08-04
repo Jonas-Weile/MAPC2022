@@ -28,7 +28,6 @@ module receiveConnectionRequests {
 					   bel(X is MyX - Xr - AgentX, Y is MyY - Yr - AgentY),
 					   bel(translateCoordinatesToMyOrigin(X, Y, OffsetXFromMyOrigin, OffsetYFromMyOrigin))
 				do {  
-				
 					if   not(bel(agentOffset(AgentName, _, _))), not(bel(newConnection(AgentName, _, _))) 
 					then insert(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)) + print("new connection: ") + print(AgentName).
 						
