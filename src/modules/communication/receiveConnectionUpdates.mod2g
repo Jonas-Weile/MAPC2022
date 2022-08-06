@@ -2,6 +2,7 @@ use "../../knowledge_generated" as knowledge.
 
 module receiveConnectionUpdates {
 
+	% Only 1 agent in each connected cohort should deal with connection updates.
 	if bel(name(MyName)), 
 	   bel(connectedAgentsOrdered(ConnectedAgents)),
 	   bel(last(ConnectedAgents, MyName))
@@ -12,7 +13,7 @@ module receiveConnectionUpdates {
 		   if bel(savedConnectionUpdates(SavedUpdates), append(SavedUpdates, ConnectionUpdates, AllUpdates)), 
 		      bel(length(AllUpdates, Len)) 
 		    then {		    			
-		   				   		
+
 			    % Find new connections
 		     	if bel(teamSize(Len)),
 		     	   bel(findNewConnections(AllUpdates, NewConnections, NewDimensions))
@@ -25,7 +26,7 @@ module receiveConnectionUpdates {
 		     			     	
 		     		if bel(NewConnections \= []) 
 		     		then {
-		     		
+		     			
 			     		% Inform all connected agents
 			     	 	if bel(shareCommonKnowledge(AllUpdates, NewConnections, NewKnowledge)),
 			     	 	    bel(findCommonTaskMaster(AllUpdates, NewConnections, NewTaskMasterList))

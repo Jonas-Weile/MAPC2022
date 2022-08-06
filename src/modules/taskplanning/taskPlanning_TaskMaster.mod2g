@@ -1,74 +1,56 @@
 use "../../knowledge_generated" as knowledge.
 
-
 module taskPlanning_TaskMaster {
-	
-	if bel(step(CurrentStep)), bel(name(MyName)) then {
+
+	if bel(name(MyName), step(CurrentStep)) then {
+    	
+		% Send requests for resource information.
+		if bel(nameToChannel(MyName, Channel)),
+		   bel(rankTasks(Tasks), Tasks = [[_, HighestRankedTask] |_]),
+		   bel(availableGoalZones(GoalCells)) 
+		then (Channel).send?(resourceRequest(HighestRankedTask, GoalCells)) + 
+			 insert(resourceRequestSent(HighestRankedTask, GoalCells, CurrentStep)) +
+			 print("Sent resource request").
+			
+		% Allow the same task to be requested again after 10 steps
+		if bel(Step is CurrentStep - 10) then {
+			forall bel(resourceRequestSent(Task, GoalCells, Step))
+			    do delete(resourceRequestSent(Task, GoalCells, Step)).
+		}
 		
-		% Send requests for resource information, if that has not been done.
-		% record whenever this is done.
-		if not(bel(resourceRequestSent(_, _))), 
-		   bel(nameToChannel(MyName, Channel)),
-		   bel(availableGoalZones(GoalCells)),
-		   bel(getNewTasksRanked([[_, HighestRankedTask]|_]))
-	    then
-			(Channel).send?(resourceRequest(HighestRankedTask, GoalCells)) + 
-			insert(resourceRequestSent(HighestRankedTask, CurrentStep)).
-		
-		% Save all replies - only use them once 3 steps have surpassed
-		if bel(resourceRequestSent(Task, Step)), bel(step(CurrentStep), CurrentStep =< Step + 3) then {
-			listall AnswersList <- (Agent).sent!(resourceReply(Task, Resources)) do {
-				forall bel(member(Answer, AnswersList)) do insert(savedResourceReply(Answer)).
-			}
+		% Save all answers
+		listall AnswersList <- (Agent).sent!(resourceReply(Task, Resources)) do {
+			forall bel(member(Answer, AnswersList)) do insert(savedResourceReply(Answer)).
 		}
 	}
 	
 	% If we have sent resource requests - wait #SOME# turns - here just set to 3 for testing
-	if bel(resourceRequestSent(Task, Step)), 
-	   bel(step(CurrentStep)), 
+	if bel(resourceRequestSent(Task, GoalCells, Step)), 
 	   bel(CurrentStep is Step + 3),
-	   bel(task(TaskName, _, _, _) = Task)
+	   bel(step(CurrentStep))
 	then {
-	
-		% Mark task as checked
-		if true then insert(checkedTask(TaskName)).
-	
+		
 		% Combine new answers with saved answers and - Do the planning -
-		if bel(name(MyName)),
-		   bel(getAllSavedResourceReplies(Task, Answers)),
-		   bel(findPlan(Task, Answers, TaskPlan)), 
-		   bel(TaskPlan \= []) then {
-					
+		if bel(getResourceReplies(Task,  GoalCells, Answers)),
+		   bel(findPlan(Task, Answers, TaskPlan)),
+		   bel(TaskPlan \= [])
+		then {		
 			%%% DEBUG	
-			if true
-			then print(TaskPlan).
-			
-			% Save the plan
-			if true
-			then insert(taskPlan(TaskPlan)) +
-			     insert(taskTaken(MyName, TaskName)).
+			if true then print("TaskPlan: ") + print(TaskPlan).
 					
-			% Create task-channel
-			if bel(taskToChannel(MyName, TaskName, Channel)) 
-			then subscribe(Channel).
-			
-			forall bel(member((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), TaskPlan)) do
-				(Agent).send!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) +
-				insert(occupied(TaskName, Agent)).
-			
-			% Mark the GoalZone as occupied
-			if bel(goalZoneFromTaskPlan(TaskPlan, GoalZone)) 
-			then insert(occupied(TaskName, GoalZone)).
-		
+			% % Create task-channel
+			% if  bel(name(MyName)),
+			%	  bel(taskToChannel(MyName, TaskName, Channel)) 
+			% then subscribe(Channel).
+			% 
+			% forall bel(member((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), TaskPlan)) do
+			% 	(Agent).send!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) +
+			% 	insert(occupied(TaskName, Agent)).		
 		}
-		
-		% Delete the requests-sent belief
-		if true 
-		then delete(resourceRequestSent(Task, Step)).
-		
+				
 		% Delete all saved replies
-		forall bel(savedResourceReply(Reply)) 
-		do delete(savedResourceReply(Reply)).
+		forall bel(savedResourceReply([Task, Resources, Agent])) 
+		do delete(savedResourceReply([Task, Resources, Agent])).
 	}	
 
 		

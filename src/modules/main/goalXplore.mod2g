@@ -1,0 +1,10 @@
+use "../../mapcActions" as actionspec.
+use "../../knowledge_generated" as knowledge.
+
+module goalXplore {
+
+% Gravitate towards goalZones once we have some blocks
+
+
+	
+}

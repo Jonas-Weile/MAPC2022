@@ -33,7 +33,6 @@ module resetAgent {
 	forall bel(submitAgent(Agent)) do delete(submitAgent(Agent)).
 	forall bel(taskPlanToDo(ToDo)) do delete(taskPlanToDo(ToDo)).
 	forall bel(visited(X, Y, Step)) do delete(visited(X, Y, Step)).
-	forall bel(taskTaken(By, Task)) do delete(taskTaken(By, Task)).
 	forall bel(attachedToMe(Xr, Yr)) do delete(attachedToMe(Xr, Yr)).
 	forall bel(blockDelivered(Block)) do delete(blockDelivered(Block)).
 	forall bel(resourceRequest(T, R)) do delete(resourceRequest(T, R)).
@@ -44,9 +43,9 @@ module resetAgent {
 	forall bel(agentOffset(Agent, X, Y)) do delete(agentOffset(Agent, X, Y)).
 	forall bel(connectionUpdate(Update)) do delete(connectionUpdate(Update)).
 	forall bel(role(N, V, A, S, CC, CMD)) do delete(role(N, V, A, S, CC, CMD)).
-	forall bel(resourceRequestSent(T, R)) do delete(resourceRequestSent(T, R)).
 	forall bel(thing(X, Y, Type, Details)) do delete(thing(X, Y, Type, Details)).
 	forall bel(newConnection(Agent, X, Y)) do delete(newConnection(Agent, X, Y)).
+	forall bel(resourceRequestSent(T, GC, R)) do delete(resourceRequestSent(T, GC, R)).
 	forall bel(connectionFromTo(X2, Y2, Agent)) do delete(connectionFromTo(X2, Y2, Agent)).
 	forall bel(savedCommonEnvironmentPercepts(MyPosition, CEP, Step)) do delete(savedCommonEnvironmentPercepts(MyPosition, CEP, Step)).
 	forall bel(connectionRequest(AgentName, AgentCoordinates, CEPs, Step)) do delete(connectionRequest(AgentName, AgentCoordinates, CEPs, Step)).

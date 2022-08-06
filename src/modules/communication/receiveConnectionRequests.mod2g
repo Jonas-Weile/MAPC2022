@@ -31,12 +31,11 @@ module receiveConnectionRequests {
 					if   not(bel(agentOffset(AgentName, _, _))), not(bel(newConnection(AgentName, _, _))) 
 					then insert(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)) + print("new connection: ") + print(AgentName).
 						
-						%%% TODO %%%
-						% if not(goal(fullyConnected)),
-						%    bel(agentOffset(AgentName, OtherOffsetX, OtherOffsetY)),
-						%    bel(findCircumferencesFromOffsets(OffsetX, OffsetY, OtherOffsetX, OtherOffsetY, L)),
-						%    bel(findBestMapDimensions(L, MapDimensions))
-						% then all.send!(newDimensions(MapDimensions)) +	print(MapDimensions).
+					%%% TODO %%%
+					if bel(agentOffset(AgentName, OtherOffsetX, OtherOffsetY)),
+					   bel(findCircumferencesFromOffsets(OffsetXFromMyOrigin, OffsetYFromMyOrigin, OtherOffsetX, OtherOffsetY, L)),
+					   bel(findBestMapDimensions(L, MapDimensions))
+					then all.send!(newDimensions(MapDimensions)) +	print(MapDimensions).
 				}
 			}
 			

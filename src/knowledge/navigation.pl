@@ -225,7 +225,7 @@ validClearingDirection(D, X, Y) :-
 moveDirection(D, Penalty, Action, Params) :-
 	(validDirection(D), Penalty = 0, Action = move, Params = [D]) ; 
 	(validDirectionAfterRotation(D, R), Penalty = 0.1, Action = rotate, Params = [R]) ; 
-	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.5, Action = clear, Params = [X, Y])).
+	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.2, Action = clear, Params = [X, Y])).
 
 % Find the best action in order to explore the map.
 % Action is one of:

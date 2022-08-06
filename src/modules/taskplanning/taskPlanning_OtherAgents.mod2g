@@ -84,19 +84,24 @@ module taskPlanning_OtherAgents {
 	}	
 
 
+
+	% Check for any single-block tasks that I can solve myself
+	if bel(simpleTask(Task), canSolveSimpleTask(Task, TaskPlan)) then {
+		% Adopt the task!
+		
+	}
+
+
 	% If I don't have a task, then answer information requests
 	if not(bel(taskPlan(_, _, _, _, _, _, _))) then {
 		
 		% Answer requests
 		forall (TaskMaster).sent?(resourceRequest(Task, GoalCells)) do {
-			if bel(taskMaster(TaskMaster)), 
-			   bel(agentOffset(TaskMaster, Xoffset, Yoffset)), 
-			   bel(addOffset_list(Xoffset, Yoffset, GoalCells, GoalCells_Offset)), 
-			   bel(getResourcesForTask(Task, GoalCells_Offset, Resources), Resources \= [])
+			if bel(getResourcesForTask(Task, GoalCells, Resources), Resources \= [])
 			then (TaskMaster).send!(resourceReply(Task, Resources)).
 		}
 		
-		% Receive taskplan
+		% Recieve taskplan
 		listall TaskPlans 
 			<- (TaskMaster).sent!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) do {
 		

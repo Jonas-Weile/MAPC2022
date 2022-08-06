@@ -228,69 +228,6 @@ cellsInRange(X,Y, MinRange, MaxRange, Cells) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %% communication.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
-getAllConnectionRequestsFromStep(Step, ConnectionRequests) :-
-	findall([AgentName, AgentX, AgentY, CEPs, Step],
-		connectionRequest(AgentName, AgentX, AgentY, CEPs, Step),
-		ConnectionRequests).
-
-connectedAgentsOrdered(ConnectedAgents_ord) :-
-	findall(Agent, agentOffset(Agent, _, _), Agents),
-	list_to_ord_set(Agents, Agents_ord),
-	name(MyName),
-	ord_add_element(Agents_ord, MyName, ConnectedAgents_ord).
-	
-
-identifyCommonEnvironmentPercepts(X, Y, Cep) :-
-	visionForRole(default, VisionRange),
-	findall(envPercept(Xe, Ye, Type), 
-		(  
-		   (  
-		      thing(Xe, Ye, Type, _);
-		      (obstacle(Xe, Ye), Type = obstacle);
-		      (goalZone(Xe, Ye), Type = goalZone);
-		      (roleZone(Xe, Ye), Type = roleZone)
-		   ),
-		   (Xe, Ye) \= (X, Y),
-		   
-		   distanceBetweenPoints_Manhattan(X, Y, Xe, Ye, D1), D1 =< VisionRange,
-		   distanceBetweenPoints_Manhattan(0, 0, Xe, Ye, D2), D2 =< VisionRange		   
-		), 
-		Cep
-	       ).
-		
-
-uniqueConnectionRequests(Requests, UniqueRequests) :-
-	findall((Agent, AgentX, AgentY, Xr, Yr, CEP),
-		(
-		   member(Request, Requests),
-		   Request = [Agent, AgentX, AgentY, CEPs, _],
-		   member([Xr, Yr, CEP], CEPs),
-		   CEP \= []
-		),
-		NonEmptyRequests),
-	
-	findall(Request,
-		(
-		   member((Agent, AgentX, AgentY, Xr, Yr, CEP), NonEmptyRequests),
-		   not(( 
-		   	member((OtherAgent, _, _, Xr, Yr, OtherCEP), NonEmptyRequests),
-		   	OtherAgent \= Agent,
-		   	sort(CEP, CEPsorted),
-		   	sort(OtherCEP, CEPsorted)
-		   )),
-		   Request = (Agent, AgentX, AgentY, Xr, Yr, CEP)
-		),
-		UniqueRequests).
-		
-
-		
-matchingEnvironmentPercepts([], [], _, _).
-matchingEnvironmentPercepts([envPercept(Xe, Ye, Type)|Cep1], Cep2, X, Y) :-
-	Xe2 is Xe+X, Ye2 is Ye+Y,
-	select(envPercept(Xe2, Ye2, Type), Cep2, Cep2Rest),
-	matchingEnvironmentPercepts(Cep1, Cep2Rest, X, Y).
-
-
 findAdjacentAgents(Agents) :-
 	findall((Dist, Xr, Yr), 
 		(
@@ -309,6 +246,82 @@ findAdjacentAgents([(Dist1, X1, Y1)|T], NotConnected, Connected, AdjacentAgents)
   	) ->
 		findAdjacentAgents(T, [(X1, Y1)|NotConnected], Connected, AdjacentAgents);
 		findAdjacentAgents(T, NotConnected,[(X1, Y1)|Connected], AdjacentAgents).
+		
+		
+		
+identifyCommonEnvironmentPercepts(Xr, Yr, Cep) :-
+	visionForRole(default, VisionRange),
+	findall([Xe, Ye, Type], 
+		(  
+		   (  
+		      thing(Xe, Ye, Type, _);
+		      (obstacle(Xe, Ye), Type = obstacle);
+		      (goalZone(Xe, Ye), Type = goalZone);
+		      (roleZone(Xe, Ye), Type = roleZone)
+		   ),
+		   (Xe, Ye) \= (Xr, Yr),
+		   
+		   distMan(Xr, Yr, Xe, Ye, D1), D1 =< VisionRange,
+		   distMan(0, 0, Xe, Ye, D2), D2 =< VisionRange		   
+		), 
+		Cep
+	       ).
+	       
+	       	
+getAllConnectionRequestsFromStep(Step, ConnectionRequests, Len) :-
+	findall([AgentName, AgentCoordinates, CEPs, Step],
+		connectionRequest(AgentName, AgentCoordinates, CEPs, Step),
+		ConnectionRequests),
+	length(ConnectionRequests, Len).
+
+
+uniqueConnectionRequests(Requests, UniqueRequests) :-
+	findall((Agent, AgentX, AgentY, Xr, Yr, CEP),
+		(
+		   member([Agent, [AgentX, AgentY], [Xr, Yr, CEP], _], Requests),
+		   CEP \= []
+		),
+		NonEmptyRequests),
+	
+	findall((Agent, AgentX, AgentY, Xr, Yr, CEP),
+		(
+		   member((Agent, AgentX, AgentY, Xr, Yr, CEP), NonEmptyRequests),
+		   not(( 
+		   	member((OtherAgent, _, _, Xr, Yr, OtherCEP), NonEmptyRequests),
+		   	OtherAgent \= Agent,
+		   	sort(CEP, CEPsorted),
+		   	sort(OtherCEP, CEPsorted)
+		   ))
+		),
+		UniqueRequests).
+
+
+matchingEnvironmentPercepts(Xr, Yr, CEP, Step, MyX, MyY) :-
+	X is -Xr, Y is -Yr,
+	savedCommonEnvironmentPercepts([MyX, MyY], [X, Y, MyCEP], Step),
+	matchEnvironmentPercepts(CEP, MyCEP, X, Y).
+	
+matchEnvironmentPercepts(CEP1, CEP2, X, Y) :-
+	findall([X2, Y2, Type],
+		(
+			member([X1, Y1, Type], CEP1),
+			X2 is X1+X, Y2 is Y1+Y
+		),
+		CEP_translated),
+	sort(CEP2, CEP2_sorted),
+	sort(CEP_translated, CEP2_sorted).
+	
+	
+connectedAgentsOrdered(ConnectedAgents_ord) :-
+	findall(Agent, agentOffset(Agent, _, _), Agents),
+	list_to_ord_set(Agents, Agents_ord),
+	name(MyName),
+	ord_add_element(Agents_ord, MyName, ConnectedAgents_ord).
+		
+
+		
+
+
 
 
 savedConnectionUpdates(SavedUpdates) :-
@@ -500,14 +513,13 @@ oldConnectionsOrdered(OldConnectionsOrdered) :-
 	visited/3,
 	
 	
-	commonEnvironmentPercepts/3,
 	savedCommonEnvironmentPercepts/3,
 	
 	agentOffset/3,
 	
 	newConnection/3,
 	
-	connectionRequest/5,
+	connectionRequest/4,
 	connectionUpdate/1,
 	connectionToInfo/2, 
 	newConnections/3,
@@ -523,12 +535,11 @@ oldConnectionsOrdered(OldConnectionsOrdered) :-
 	
 	share/1,
 		
-	resourceRequest/2, resourceRequestSent/2, resourceReply/1, savedResourceReply/1,
+	resourceRequest/2, resourceRequestSent/3, resourceReply/1, savedResourceReply/1,
 	
 	connectionFromTo/3, connectionFromTo/5,
 	
-	occupied/2, taskTaken/2, checkedTask/1, blockDelivered/1,
-	waypointsToGoal/2,
+	occupied/2, blockDelivered/1, waypointsToGoal/2,
 	
 	translateToMyOrigin_Agent/2, findNC_folder/1, collectListsToSets/0, gcd_helper/0,
 	connectedBlocks_folder/0, rankTask/0, buildAgentPlanFromAssignments/1, relativeToAbsolutePositionOfPoints/0. 
@@ -923,7 +934,7 @@ validClearingDirection(D, X, Y) :-
 moveDirection(D, Penalty, Action, Params) :-
 	(validDirection(D), Penalty = 0, Action = move, Params = [D]) ; 
 	(validDirectionAfterRotation(D, R), Penalty = 0.1, Action = rotate, Params = [R]) ; 
-	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.5, Action = clear, Params = [X, Y])).
+	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.2, Action = clear, Params = [X, Y])).
 
 exploreAction(Action, Params) :-
 	findall((Score, D, Action, Params),
@@ -986,8 +997,315 @@ visionForRole(Role, Vision) :-
  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%% task_planning.pl 
+%% taskPlanning.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+availableGoalZones(GoalZones) :-
+	findall(goalCell(X, Y), goalCell(X, Y), GoalCells),
+	goalCellsToGoalZones(GoalCells, [], [], GoalZones).
+
+goalCellsToGoalZones([], _, GoalZones, GoalZones).
+goalCellsToGoalZones([goalCell(X1, Y1)|Rest], CheckedCells, FoundZones, GoalZones) :-
+	member(goalCell(X2, Y2), CheckedCells), 
+	distanceBetweenPoints_Euclidian(X1, Y1, X2, Y2, Dist),
+	Dist =< 5,
+	!,
+	goalCellsToGoalZones(Rest, [goalCell(X1, Y1)|CheckedCells], FoundZones, GoalZones).
+	
+goalCellsToGoalZones([goalCell(X1, Y1)|Rest], CheckedCells, FoundZones, GoalZones) :-
+	goalCellsToGoalZones(Rest, [goalCell(X1, Y1)|CheckedCells], [goalCell(X1, Y1)|FoundZones], GoalZones).
+
+	
+	
+rankTasks(SortedTasks) :-
+	findall(RankedTask, 
+		(
+			task(Name, Deadline, Reward, Requirements),
+			not(resourceRequestSent(task(Name, Deadline, Reward, Requirements), _, _)),
+			rankTask(task(Name, Deadline, Reward, Requirements), RankedTask)
+		),
+		RankedTasks),
+	reverseSort(RankedTasks, SortedTasks).
+	
+rankTask(task(Name, Deadline, Reward, Requirements), RankedTask) :-
+	step(CurrentStep),
+	RemainingSteps is Deadline - CurrentStep,
+	Rank is Reward + RemainingSteps,
+	RankedTask = [Rank, task(Name, Deadline, Reward, Requirements)].
+	
+	
+complexTask(Task) :- 
+	not(simpleTask(Task)).
+	
+simpleTask(task(_, _, _, Requirements)) :-
+	Requirements = [SingleReq].
+	
+simpleTask(task(_, _, _, Requirements)) :-
+	Requirements = [req(X1, Y1, _), req(X2, Y2, _)],
+	(X1 + Y1) =< 1,
+	(X2 + Y2) =< 1.	
+
+
+allResourceReplies(Replies) :-
+	findall(Reply,
+		(
+			savedResourceReply(SavedReply), 
+			SavedReply = [Task, Resources, Agent],
+			not(occupied(_, Agent)),
+			Reply = [Resources, Agent]
+		),
+		Replies),
+	Replies \= [].
+		
+		
+getResourceReplies(Task, GoalCells, Replies) :-
+	allResourceReplies(AllReplies),	
+	findall((GoalCell, RepliesByGoalCell), 	
+		(
+			member(GoalCell, GoalCells),
+			extractRepliesForGoalCell(GoalCell, AllReplies, RepliesByGoalCell)
+		),
+		Replies).
+
+
+extractRepliesForGoalCell(GoalCell, AllReplies, RepliesByGoalCell) :-
+	findall((Agent, Resources),
+		(
+			member(Reply, AllReplies),
+			Reply = [ResourcesByGoalCell , Agent],
+			member([GoalCell, Resources], ResourcesByGoalCell)			
+		),
+		RepliesByGoalCell).
+			
+			
+findPlan(Task, Answers, TaskPlan) :-
+	bestAssignment(Task, Answers, Assignment, ETA),
+	
+	buildTaskPlanFromAssignments(Task, Assignment, ETA, TaskPlan).
+		
+
+
+bestAssignment(Task, AllAnswers, BestAssignment, BestETA) :-
+	Task = task(_, _, _, Requirements),
+    
+	requirementsByBlockType(Requirements, ReqByBlockType),
+	
+	findall(Assignment, 
+		( 
+		   member((GoalZone, AnswersForGoalZone), AllAnswers),
+		   bestAssigntmentForGoalZone(Task, GoalZone, AnswersForGoalZone, ReqByBlockType, Assignment)
+		),
+		PossibleAssignments),
+	
+	keysort(PossibleAssignments, [BestETA-BestAssignment|_]).
+
+
+bestAssigntmentForGoalZone(Task, GoalZone, Answers, Requirements, Assignment) :-
+	Task = task(TaskName, Deadline, _, _),
+	
+	length(Answers, NrOfAnswers),
+	length(Requirements, NrOfRequirements),
+	NrOfAnswers >= NrOfRequirements,
+	
+	findall(MaxDistance-Match,
+			( 
+				matchAgentsToRequirements(TaskName, GoalZone, Answers, Requirements, [], Match),
+				findall(Distance, member((_, _, Distance, _, _, _, _), Match), Distances),
+				max_list(Distances, MaxDistance)
+			),
+			Matches),
+	
+	min_member(BestMatchDistance-BestMatch, Matches),
+	
+	step(Step),
+	ETA is Step + (BestMatchDistance),
+	ETA =< Deadline,
+	Assignment = ETA-BestMatch.
+		
+		
+		
+
+
+matchAgentsToRequirements(_, _, [], [_|_], _, []).
+
+matchAgentsToRequirements(_, _,  _, [], PartialMatch, Match) :-
+	PartialMatch \= [],
+    	Match = PartialMatch.
+	
+matchAgentsToRequirements(TaskName, GoalZone, Agents, 
+                          [(BlockType, ReqQty, Positions)|OtherRequirements],
+                          PartialMatch, Match) :-	
+			  
+	select((Agent, BlockList), Agents, AgentsRest),
+	member(Block, BlockList),
+	Block = (BlockType, Dist, Stops, BlockQty),
+	
+	ReqQty =< BlockQty,
+	
+	agentOffset(Agent, OffsetX, OffsetY),
+	addOffset(OffsetX, OffsetY, GoalZone, OffsetGoalZone),
+	append(Stops, [OffsetGoalZone], Path),
+	AgentPlan = (Agent, TaskName, Dist, BlockType, ReqQty, Path, Positions),
+	
+	matchAgentsToRequirements(TaskName, GoalZone, AgentsRest, 
+				  OtherRequirements, 
+				  [AgentPlan |PartialMatch], Match).
+
+
+
+requirementsByBlockType(Requirements, FilteredRequirements) :-
+	findall((BlockType, 1, [(X, Y)]),
+		(
+			member(req(X, Y, BlockType), Requirements),
+			translate(_, 0, 0, X, Y)
+		),
+		SubmitAgentRequirements),
+	
+	findall(req(X, Y, BlockType),
+			(
+				member(req(X, Y, BlockType), Requirements),
+				not(translate(_, 0, 0, X, Y))
+			),
+			OtherRequirements),
+	
+	findall(BlockType, member(req(_, _, BlockType), OtherRequirements), BlockTypes),
+	setof((BlockType, Qty), (member(BlockType, BlockTypes), count(BlockTypes, BlockType, Qty)), Blocks),
+	findall((BlockType, Qty, Positions),
+		(
+			member((BlockType, Qty), Blocks),
+			findall((X, Y), member(req(X, Y, BlockType), OtherRequirements), Positions)
+		),
+		OtherRequirementsByBlockType),
+	
+	append(SubmitAgentRequirements, OtherRequirementsByBlockType, FilteredRequirements).	
+	
+	
+buildTaskPlanFromAssignments(Task, Assignments, ETA, TaskPlan) :-
+	task(TaskName, _, _, Requirements) = Task,
+	
+	matchRequirementsAndAssignments(Assignments, Requirements, Connections),
+
+	findall((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections),
+		member((Agent, TaskName, _, BlockType, BlockQty, AgentPlan, _), Assignments),	
+		TaskPlan).
+
+
+matchRequirementsAndAssignments(Assignments, Requirements, Connections) :-
+	findall((Agent, BlockType, Xr, Yr, Dist),
+		(
+			member(req(Xr, Yr, BlockType), Requirements),
+			member((Agent, _, _, BlockType, _, _, Positions), Assignments),
+			member((Xr, Yr), Positions),
+			distMan(0, 0, Xr, Yr, Dist)	
+		),
+		Connections).
+
+
+
+
+getResourcesForTask(Task, GoalCells, Resources) :-
+	findall(ClosestResources,
+		( 
+			member(GoalCell, GoalCells), 
+		  	closestResourcesToGoalCellForTask(GoalCell, Task, ClosestResources) 
+		),
+		Resources).
+		
+
+closestResourcesToGoalCellForTask(GoalCell, Task, ClosestResourcesToGoalCell) :-
+	taskMaster(TaskMaster), 
+	agentOffset(TaskMaster, OffsetX, OffsetY),
+	addOffset(OffsetX, OffsetY, GoalCell, OffsetGoalCell),
+	
+	task(_, Deadline, _, Requirements) = Task,
+	step(Step),
+	MaxDist is (Deadline - Step),
+	
+	findall(BlockType, member(req(_, _, BlockType), Requirements), RepeatingBlockTypes),
+	sort(RepeatingBlockTypes, BlockTypes),
+
+	findall(ClosestResource,
+		(
+			member(BlockType, BlockTypes), 
+			closestBlockResourceToGoalCell(BlockType, OffsetGoalCell, ClosestResource),
+			ClosestResource = (BlockType, DistToGoal, WayPoint, Qty),
+			DistToGoal < MaxDist
+		),
+		ClosestResources),
+		
+	ClosestResources \= [],
+	ClosestResourcesToGoalCell = [GoalCell, ClosestResources].
+		
+		
+closestBlockResourceToGoalCell(BlockType, GoalCell, ClosestResource) :-
+	findall(_, attachedToMe(_, _, block, BlockType), AttachedBlocks), length(AttachedBlocks, NrOfAttachedBlocks),
+	
+	(NrOfAttachedBlocks > 0 -> 
+	      closestResourcesWithAttachedBlocks(NrOfAttachedBlocks, BlockType, GoalCell, ClosestResource)
+	      ;
+	      closestResourcesWithoutAttachedBlocks(BlockType, GoalCell, ClosestResource)
+	).
+
+
+closestResourcesWithAttachedBlocks(Qty, BlockType, GoalCell, ClosestResource) :-
+	goalCell(X, Y) = GoalCell, myPosition(MyX, MyY), 
+	distanceBetweenPoints_Manhattan(MyX, MyY, X, Y, DistToGoal),
+	ClosestResource = (BlockType, DistToGoal, [], Qty).
+
+
+closestResourcesWithoutAttachedBlocks(BlockType, GoalCell, ClosestResource) :-
+	Qty is 2,
+        closestDispenserToGoal(GoalCell, BlockType, Dispenser, DistWithDispenser),
+        ClosestResource = (BlockType, DistWithDispenser, [Dispenser], Qty).
+        
+        	
+closestDispenserToGoal(goalCell(X, Y), BlockType, Dispenser, ShortestDist) :-
+	myPosition(MyX, MyY), 
+	findall([Distance, dispenser(Xd, Yd, BlockType)],
+	                 (
+	                 	dispenser(Xd, Yd, BlockType), 
+	                 	distanceBetweenPoints_Manhattan(MyX, MyY, Xd, Yd, DistanceToDispenser),
+	                 	distanceBetweenPoints_Manhattan(Xd, Yd, X, Y, DistanceFromDispenser),
+	                 	Distance is DistanceToDispenser + DistanceFromDispenser
+	                 ),
+	                 Dispensers),
+	         sort(Dispensers, SortedDispensers), 
+	         SortedDispensers = [[ShortestDist, Dispenser]|_].     
+	        
+
+nextTaskMaster(ConnectedAgents, NextTaskMaster) :-
+	name(MyName),
+	list_to_ord_set(ConnectedAgents, ConnectedAgents_Ordered),
+	ord_add_element(ConnectedAgents_Ordered, MyName, Network),
+	[NextTaskMaster|_] = Network.
+
+
+findCommonTaskMaster(ConnectionUpdateList, NewConnections, CommonTaskMaster) :-
+	findall(TaskMaster, taskMaster(TaskMaster), MyTaskMasters),
+	
+	findall(TaskMaster, 
+		(
+		 member((Agent, _, _), NewConnections),
+		 member((Agent, _, _, _, TaskMasterList), ConnectionUpdateList),
+		 member(TaskMaster, TaskMasterList)
+		),
+		ConnTaskMasters),
+	
+	list_to_ord_set(ConnTaskMasters, Ord_ConnTaskMasters),
+	ord_union(Ord_ConnTaskMasters, MyTaskMasters, TaskMasters),
+	
+	CommonTaskMaster = TaskMasters.
+	
+
+
+taskMastersOrdered(TaskMasters_Ordered) :-
+	findall(TaskMaster, taskMaster(TaskMaster), TaskMasters),
+	list_to_ord_set(TaskMasters, TaskMasters_Ordered).
+	
+
+
+
+	
 missingDeliverable(BlockType, Connections) :-
 	name(MyName),
 	findall(_,
@@ -1139,302 +1457,8 @@ findClosestAdjacentFreePosition(GoalCellXr, GoalCellYr, Xr, Yr, Connections, GoT
 	keysort(AdjacentPositions, [Dist-(GoToX, GoToY)|_]).
 	
 	
-	
-goalZoneFromTaskPlan(TaskPlan, GoalZone) :-
-	TaskPlan = [(Agent, _, _, AgentPlan, _, _, _)|_],
-	member(goalCell(Xgc, Ygc), AgentPlan),
-	agentOffset(Agent, OffsetX, OffsetY),
-	X is Xgc + OffsetX,
-	Y is Ygc + OffsetY,
-	translateCoordinatesToMyOrigin(X, Y, XFromMyOrigin, YFromMyOrigin),
-	GoalZone = goalCell(XFromMyOrigin, YFromMyOrigin).
-
-availableGoalZones(GoalZones) :-
-	findall(goalCell(X, Y), goalCell(X, Y), GoalCells),
-	goalCellsToAvailableGoalZones(GoalCells, GoalZones).
-
-goalCellsToAvailableGoalZones(GoalCells, AvailableGoalZones) :-
-	findall(goalCell(X, Y), (goalCell(X, Y), occupied(_, goalCell(X, Y))), UnavailableGoalCells),
-	availableGoalCellsToGoalZones_rec(GoalCells, UnavailableGoalCells, [], AvailableGoalZones).
-
-availableGoalCellsToGoalZones_rec([], _, AvailableGoalZones, AvailableGoalZones).
-availableGoalCellsToGoalZones_rec([goalCell(X1, Y1)|Rest], CheckedCells, FoundZones, GoalZones) :-
-	member(goalCell(X2, Y2), CheckedCells), 
-	distanceBetweenPoints_Euclidian(X1, Y1, X2, Y2, Dist),
-	Dist =< 5,
-	!,
-	availableGoalCellsToGoalZones_rec(Rest, [goalCell(X1, Y1)|CheckedCells], FoundZones, GoalZones).
-	
-availableGoalCellsToGoalZones_rec([goalCell(X1, Y1)|Rest], CheckedCells, FoundZones, GoalZones) :-
-	availableGoalCellsToGoalZones_rec(Rest, [goalCell(X1, Y1)|CheckedCells], [goalCell(X1, Y1)|FoundZones], GoalZones).
-
-	
-reorderAnswers(Answers, ReorderedAnswers) :-
-	findall(ReorderedAnswers,
-		(
-			nth0(I, Answers, [Answer, Agent]),  nth0(J, Answer, [GoalCell, List]), 
-			length(Answers, NrOfAgents), length(Answer, NrOfGoalCells),
-			
-			nth0(J, ReorderedAnswers, Agents), nth0(I, Agents, (Agent, GoalCell, List)),
-			length(ReorderedAnswers, NrOfGoalCells), length(Agents, NrOfAgents)
-		),
-		List),
-	maplist(=(ReorderedAnswers), List).
-	
-	
-getAllSavedResourceReplies(Task, Replies) :-
-	findall(Reply, 	
-		(
-			savedResourceReply(SavedReply), 
-			SavedReply = [Task, Resources, Agent],
-			not(occupied(_, Agent)),
-			Reply = [Resources, Agent]
-		),
-		Replies).
-		
-		
-getNewTasksRanked(SortedTasks) :-
-	findall(task(Name, Deadline, Reward, Requirements), 
-		(
-			task(Name, Deadline, Reward, Requirements),
-			not(taskTaken(_, Name)),
-			not(checkedTask(Name))
-		), Tasks),
-	rankTasks(Tasks, RankedTasks),
-	reverseSort(RankedTasks, SortedTasks).
-	
-
-findPlan(Task, Answers, TaskPlan) :-
-	Answers \= [],
-	task(_, Deadline, _, _) = Task,
-	reorderAnswers(Answers, ReorderedAnswers),
-	
-	bestAssignment(Task, ReorderedAnswers, Assignment, ETA),
-	Deadline > ETA,
-	
-	buildTaskPlanFromAssignments(Task, Assignment, ETA, TaskPlan).
-	
-	
-buildTaskPlanFromAssignments(Task, Assignments, ETA, TaskPlan) :-
-	task(TaskName, _, _, Requirements) = Task,
-	
-	matchRequirementsAndAssignments(Assignments, Requirements, Connections),
-
-	findall((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections),
-		member((Agent, TaskName, _, BlockType, BlockQty, AgentPlan, _), Assignments),	
-		TaskPlan).
-
-
-matchRequirementsAndAssignments(Assignments, Requirements, Connections) :-
-	findall((Agent, BlockType, Xr, Yr, Dist),
-		(
-			member(req(Xr, Yr, BlockType), Requirements),
-			member((Agent, _, _, BlockType, _, _, Positions), Assignments),
-			member((Xr, Yr), Positions),
-			distMan(0, 0, Xr, Yr, Dist)	
-		),
-		Connections).
-
-
-rankTasks(Tasks, RankedTasks) :-
-	findall(RankedTask,
-		(member(Task, Tasks), rankTask(Task, RankedTask)),
-		RankedTasks).
-	
-rankTask(task(Name, Deadline, Reward, Requirements), RankedTask) :-
-	step(CurrentStep),
-	RemainingSteps is Deadline - CurrentStep,
-	Rank is RemainingSteps + Reward,
-	RankedTask = [Rank, task(Name, Deadline, Reward, Requirements)].
-	
-	
-
-bestAssignment(Task, AnswersToAllGoalZones, BestAssignment, BestETA) :-
-	task(TaskName, Deadline, _, Requirements) = Task,
-	
-	requirementsByBlockType(Requirements, ReqByBlockType),
-	
-	findall(Assignment, 
-		( 
-		   member(AnswersToGoalzone, AnswersToAllGoalZones),
-		   possibleAssignment(TaskName, Deadline, AnswersToGoalzone, ReqByBlockType, Assignment)
-		),
-		PossibleAssignments),
-	
-	keysort(PossibleAssignments, [BestETA-BestAssignment|_]).
-
-
-
-possibleAssignment(TaskName, Deadline, AnswersToGoalZone, Requirements, Assignment) :-
-	length(AnswersToGoalZone, NrOfAnswers),
-	length(Requirements, NrOfRequirements),
-	NrOfAnswers >= NrOfRequirements,
-	
-	findall(MaxDistance-Match,
-			( 
-				matchAgentsToRequirements(TaskName, AnswersToGoalZone, Requirements, [], [], Match),
-				findall(Distance, member((_, _, Distance, _, _, _), Match), Distances),
-				max_list(Distances, MaxDistance)
-			),
-			Matches),
-	
-	min_member(BestMatchDistance-BestMatch, Matches),
-	
-	step(Step),
-	ETA is Step + (2*BestMatchDistance),
-	ETA =< Deadline,
-	Assignment = ETA-BestMatch.
-		
 		
 
-matchAgentsToRequirements(_, [], [_|_], _, _, []).
-
-matchAgentsToRequirements(_, _, [], SubmitAgentPlan, OtherAgentPlans, Matches) :-
-	SubmitAgentPlan \= [],
-	append(SubmitAgentPlan, OtherAgentPlans, Matches).
-	
-matchAgentsToRequirements(TaskName, Agents, [(BlockType, ReqQty, Positions)|OtherRequirements], [], OtherAgentPlans, Matches) :-
-	member((X, Y), Positions),
-	translate(_, 0, 0, X, Y),
-	
-	select((Agent, GoalCell, BlockList), Agents, AgentsRest),
-	member(AvailableBlock, BlockList),
-	AvailableBlock = (BlockType, _, [TotalDist|Stops], BlockQty),
-	ReqQty =< BlockQty,
-	append(Stops, [GoalCell], Path),
-	SubmitAgentPlan = [(Agent, TaskName, TotalDist, BlockType, ReqQty, Path, Positions)],
-	
-	matchAgentsToRequirements(TaskName, AgentsRest, OtherRequirements, SubmitAgentPlan, OtherAgentPlans, Matches).
-
-matchAgentsToRequirements(TaskName, Agents, [(BlockType, ReqQty, Positions)|OtherRequirements], SubmitAgentPlan, OtherAgentPlans, Matches) :-
-	select((Agent, GoalCell, BlockList), Agents, AgentsRest),
-	member(AvailableBlock, BlockList),
-	AvailableBlock = (BlockType, [Dist|Stops], _, BlockQty),
-	ReqQty =< BlockQty,
-	append(Stops, [GoalCell], Path),
-	AgentPlan = (Agent, TaskName, Dist, BlockType, ReqQty, Path, Positions),
-	
-	matchAgentsToRequirements(TaskName, AgentsRest, OtherRequirements, SubmitAgentPlan, [AgentPlan|OtherAgentPlans], Matches).
-	
-	
-requirementsByBlockType(Requirements, FilteredRequirements) :-
-	findall((BlockType, 1, [(X, Y)]),
-		(
-			member(req(X, Y, BlockType), Requirements),
-			translate(_, 0, 0, X, Y)
-		),
-		SubmitAgentRequirements),
-	
-	findall(req(X, Y, BlockType),
-			(
-				member(req(X, Y, BlockType), Requirements),
-				not(translate(_, 0, 0, X, Y))
-			),
-			OtherRequirements),
-	
-	findall(BlockType, member(req(_, _, BlockType), OtherRequirements), BlockTypes),
-	setof((BlockType, Qty), (member(BlockType, BlockTypes), count(BlockTypes, BlockType, Qty)), Blocks),
-	findall((BlockType, Qty, Positions),
-		(
-			member((BlockType, Qty), Blocks),
-			findall((X, Y), member(req(X, Y, BlockType), OtherRequirements), Positions)
-		),
-		OtherRequirementsByBlockType),
-	
-	append(SubmitAgentRequirements, OtherRequirementsByBlockType, FilteredRequirements).	
-	
-	
-	
-getResourcesForTask(Task, GoalCells, Resources) :-
-	findall(ClosestResources,
-		( member(GoalCell, GoalCells), closestResourcesToGoalCellForTask(GoalCell, Task, ClosestResources) ),
-		Resources).
-		
-
-closestResourcesToGoalCellForTask(GoalCell, Task, ClosestResourcesToGoalCell) :-
-	task(_, Deadline, _, Requirements) = Task,
-	step(Step),
-	MaxDist is 0.5 * (Deadline - Step),
-	
-	findall(BlockType, member(req(_, _, BlockType), Requirements), RepeatingBlockTypes),
-	sort(RepeatingBlockTypes, BlockTypes),
-
-	findall(ClosestResource,
-		(member(BlockType, BlockTypes), closestBlockResourceToGoalCell(BlockType, GoalCell, MaxDist, ClosestResource)),
-		ClosestResources),
-		
-	ClosestResourcesToGoalCell = [GoalCell, ClosestResources].
-		
-		
-closestBlockResourceToGoalCell(BlockType, GoalCell, MaxDist, ClosestResource) :-
-	findall(_, attachedToMe(_, _, block, BlockType), AttachedBlocks), length(AttachedBlocks, NrOfAttachedBlocks),
-	
-	(NrOfAttachedBlocks > 0 -> 
-	      closestResourcesWithAttachedBlocks(NrOfAttachedBlocks, BlockType, GoalCell, MaxDist, ClosestResource)
-	      ;
-	      closestResourcesWithoutAttachedBlocks(BlockType, GoalCell, MaxDist, ClosestResource)
-	).
-
-
-closestResourcesWithAttachedBlocks(NrOfAttachedBlocks, BlockType, GoalCell, MaxDist, ClosestResource) :-
-	goalCell(X, Y) = GoalCell, myPosition(MyX, MyY), 
-	distanceBetweenPoints_Manhattan(MyX, MyY, X, Y, DistToGoal),
-	DistToGoal < MaxDist, 
-	Qty = NrOfAttachedBlocks,
-	ClosestResource = (BlockType, [DistToGoal], [], Qty).
-
-
-closestResourcesWithoutAttachedBlocks(BlockType, GoalCell, MaxDist, ClosestResource) :-
-	Qty is 2,
-        closestDispenserToGoal(GoalCell, BlockType, Dispenser, DistWithDispenser),
-        DistWithDispenser < MaxDist,
-        ClosestResource = (BlockType, [DistWithDispenser, Dispenser], [], Qty).
-        
-        	
-closestDispenserToGoal(goalCell(X, Y), BlockType, Dispenser, ShortestDist) :-
-	myPosition(MyX, MyY), 
-	findall([Distance, dispenser(Xd, Yd, BlockType)],
-	                 (
-	                 	dispenser(Xd, Yd, BlockType), 
-	                 	distanceBetweenPoints_Manhattan(MyX, MyY, Xd, Yd, DistanceToDispenser),
-	                 	distanceBetweenPoints_Manhattan(Xd, Yd, X, Y, DistanceFromDispenser),
-	                 	Distance is DistanceToDispenser + DistanceFromDispenser
-	                 ),
-	                 Dispensers),
-	         sort(Dispensers, SortedDispensers), 
-	         SortedDispensers = [[ShortestDist, Dispenser]|_].     
-	        
-
-nextTaskMaster(ConnectedAgents, NextTaskMaster) :-
-	name(MyName),
-	list_to_ord_set(ConnectedAgents, ConnectedAgents_Ordered),
-	ord_add_element(ConnectedAgents_Ordered, MyName, Network),
-	[NextTaskMaster|_] = Network.
-
-
-findCommonTaskMaster(ConnectionUpdateList, NewConnections, CommonTaskMaster) :-
-	findall(TaskMaster, taskMaster(TaskMaster), MyTaskMasters),
-	
-	findall(TaskMaster, 
-		(
-		 member((Agent, _, _), NewConnections),
-		 member((Agent, _, _, _, TaskMasterList), ConnectionUpdateList),
-		 member(TaskMaster, TaskMasterList)
-		),
-		ConnTaskMasters),
-	
-	list_to_ord_set(ConnTaskMasters, Ord_ConnTaskMasters),
-	ord_union(Ord_ConnTaskMasters, MyTaskMasters, TaskMasters),
-	
-	CommonTaskMaster = TaskMasters.
-	
-
-
-taskMastersOrdered(TaskMasters_Ordered) :-
-	findall(TaskMaster, taskMaster(TaskMaster), TaskMasters),
-	list_to_ord_set(TaskMasters, TaskMasters_Ordered).
-	
-	
 
 findWaypoints([], []).
 findWaypoints(Path, Waypoints) :-

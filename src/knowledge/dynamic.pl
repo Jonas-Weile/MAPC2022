@@ -57,14 +57,13 @@
 	share/1,
 		
 	% resource requests
-	resourceRequest/2, resourceRequestSent/2, resourceReply/1, savedResourceReply/1,
+	resourceRequest/2, resourceRequestSent/3, resourceReply/1, savedResourceReply/1,
 	
 	% connectionFromTo
 	connectionFromTo/3, connectionFromTo/5,
 	
 	% occupied thing by some agent
-	occupied/2, taskTaken/2, checkedTask/1, blockDelivered/1,
-	waypointsToGoal/2,
+	occupied/2, blockDelivered/1, waypointsToGoal/2,
 	
 	%%%%%%%%%% THESE ARE SIMPLY TO STOP GOAL FROM COMPLAINING %%%%%%%%%
 	translateToMyOrigin_Agent/2, findNC_folder/1, collectListsToSets/0, gcd_helper/0,
