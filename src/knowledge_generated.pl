@@ -18,7 +18,7 @@ astarClear(GoalXr, GoalYr, Path, Actions) :-
     empty_heap(Frontier),
     getAttachments(Attachments),
     energy(Level),
-    validClearActions(0,0, 0, 0, Level, [], [], Attachments, [], GoalXr, GoalYr, [], Frontier, ExpandedFrontier),
+    expandFrontierClear(0, 0, 0, 0, Level, [], [], Attachments, [], GoalXr, GoalYr, Frontier, [], ExpandedFrontier),
     astarRecursiveClear(GoalXr, GoalYr, ExpandedFrontier, [state((0,0), Attachments, [])], [(FinalX, FinalY)|RevPath], RevActions),!,
     distanceBetweenPoints_Euclidian(0, 0, GoalXr, GoalYr, StartDist),
     distanceBetweenPoints_Euclidian(FinalX, FinalY, GoalXr, GoalYr, ResultDist),
@@ -89,7 +89,7 @@ validRotateActions(X,Y,_, 1, _, _, _, _, _, _, _, _,Frontier,Frontier):-
 	not(obstacleClose(X,Y)).
 validRotateActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path, ParentActions, ParentAttachments, ParentClearedCells, GoalX, GoalY, ExpandedStates, Frontier, ExpandedFrontier):-
     (ParentRotationLimit = 1 -> RotationLimit = 0; RotationLimit is ParentRotationLimit+1),
-    StepCost is ParentStepCost +1,
+    StepCost is ParentStepCost + 2,
 	heuristic(X, Y, GoalX, GoalY, StepCost, Heuristic),
     updateEnergy(ParentEnergy, UpdatedEnergy),
     findall(Heuristic-state((X,Y), StepCost, RotationLimit, UpdatedEnergy, Path, [rotate(R)|ParentActions], Attachments, ParentClearedCells),
@@ -102,18 +102,18 @@ validRotateActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path,
     
 validClearActions(_,_, _, _, ParentEnergy, _, _, _, _, _, _, _, Frontier, Frontier):-
     not(checkEnergy(ParentEnergy, _)).
+    
 validClearActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path, ParentActions, ParentAttachments, ParentClearedCells, GoalX, GoalY, ExpandedStates, Frontier, ExpandedFrontier):-
-    clearSteps(ClearSteps),
     team(Team),
     checkEnergy(ParentEnergy, EnergyAfterClear),
     updateEnergy(EnergyAfterClear, UpdatedEnergy),
-    StepCost is ParentStepCost + ClearSteps,
+    StepCost is ParentStepCost + 5,
     heuristic(X, Y, GoalX, GoalY, StepCost, Heuristic),
-    cellsInRange(X, Y, 2, 3, PotentialClearCells), 
     findall(Heuristic-state((X,Y), StepCost, ParentRotationLimit, UpdatedEnergy, Path, [clear(CellX, CellY)|ParentActions], ParentAttachments, AllClearedCells),
-            (member((CellX, CellY), PotentialClearCells),
-            clearedCells(CellX, CellY, ClearedCells),
-            not(( member((ClearedX, ClearedY), ClearedCells), (attached(ClearedX, ClearedY) ; thing(ClearedX, ClearedY, entity, Team)) )),
+            (anyDirection(D), translate(D, X, Y, CellX, CellY), astarBlocked(D, X, Y, ParentAttachments, ParentClearedCells), 
+            (obstacle(CellX, CellY) ; thing(CellX, CellY, block, _)),
+            not(member((CellX, CellY), ParentClearedCells)), ClearedCells = [(CellX, CellY)],
+            not(((attached(CellX, CellY) ; thing(CellX, CellY, entity, Team)) )),
             append(ClearedCells, ParentClearedCells, AllClearedCells),
             not(member(state((X,Y), ParentAttachments, AllClearedCells),ExpandedStates))
             ),
@@ -134,21 +134,12 @@ insertListInHeap(List, Heap, ExpandedHeap):-
 
 
 clearedCells(CellX, CellY, ClearedCells):-
-	cellsInRange(CellX, CellY, 1, Cells), 
-	findall((X, Y),
-		(member((X, Y), Cells),
-		(
-			thing(X, Y, block, _);
-			obstacle(X, Y)
-		)),
-		ClearedCells).
+	ClearedCells = [(CellX, CellY)].
 
-checkEnergy(CurrentEnergy, UpdatedEnergy):-
-    clearSteps(ClearSteps),
+checkEnergy(CurrentEnergy, UpdatedEnergy) :-
     clearEnergyCost(ClearCost), 
-    TotalEnergyCost = ClearSteps*ClearCost,
-    CurrentEnergy >= TotalEnergyCost,
-    UpdatedEnergy is CurrentEnergy - TotalEnergyCost.
+    CurrentEnergy >= ClearCost,
+    UpdatedEnergy is CurrentEnergy - ClearCost.
 
 updateEnergy(CurrentEnergy, UpdatedEnergy):- 
 	((maxEnergy(MaxLevel), CurrentEnergy < MaxLevel) -> UpdatedEnergy is CurrentEnergy +1; UpdatedEnergy is CurrentEnergy).
@@ -339,7 +330,7 @@ findNewConnections(ConnectionUpdateList, NewConnections, MapDimensions) :-
     	ord_del_element(AllConnections, (MyName, 0, 0), AllConnectionsWithoutMe),
     	ord_subtract(AllConnectionsWithoutMe, OldConnections, NewConnections),
 	
-	findBestMapDimensions(FoundMapDimensions, MapDimensions).
+	findBestMapDimensions(xx, MapDimensions).
 	
 	
 findNC_folder(_, Agent, Input, Output) :-
@@ -494,8 +485,7 @@ oldConnectionsOrdered(OldConnectionsOrdered) :-
  :- dynamic  
 	attachedToMe/2,		% Things attached to the agent 
 	enumDirList/2, 		% Pseudo-random list of enumerated directions
-	clearEnergyCost/1, clearSteps/1, clearStepsCounter/1, 
-	completedClearAction/1,	% Clearing related beliefs
+	clearEnergyCost/1,	% Cost of clearing
 	maxEnergy/1, 		% Maximum energy
 	myRole/1,		% Current role
 	
@@ -767,24 +757,15 @@ attachedToMe(Xr, Yr, Type, Details) :-
 	thing(Xr, Yr, Type, Details),
 	(Type = block; Type = entity).	
 
-connectedBlocks(Dir, AllConnectedBlocks) :-
-	translate(Dir, 0, 0, X, Y),
-	connectionFromTo(X, Y, Agent),
-	foldl(connectedBlocks_folder, [(X, Y, Agent)],  [(X, Y, Agent)], AllConnectedBlocks).
 
-connectedBlocks_folder((X, Y, Agent), OldConnections, AllConnectedBlocks) :-
-	findall((BlockX, BlockY, Agent),
-		(
-			connectionFromTo(BlockX, BlockY, Agent),
-			translate(_, X, Y, BlockX, BlockY),
-			not(member((BlockX, BlockY, Agent), OldConnections))
-			
-		),
-		NewConnections),
-	list_to_ord_set(NewConnections, NewConnections_ord),
-	ord_union(OldConnections, NewConnections_ord, ConnectedBlocks_ord),
-	foldl(connectedBlocks_folder, NewConnections_ord,  ConnectedBlocks_ord, AllConnectedBlocks).
-	
+furthestConnectionFromTo(X1, Y1, X2, Y2) :-
+	findall((Dist, X3, Y3, X4, Y4),
+		connectionFromTo(X3, Y3, X4, Y4, _),
+		Connections),
+	Connections \= [],
+	reverseSort(Connections, ConnectionsSorted),
+	ConnectionsSorted = [(_, X1, Y1, X2, Y2)|_].
+
 
 impassable(X, Y) :- obstacle(X, Y).
 impassable(X, Y) :- thing(X, Y, entity, _).
@@ -792,6 +773,10 @@ impassable(X, Y) :- thing(X, Y, block, BlockType), not(attachedToMe(X, Y, block,
 
 blocked(D) :- 
 	blockedForMe(D) ; blockedForMyAttachments(D).
+
+blocked(Xr, Yr) :-
+	impassable(X, Y).
+
 
 blockedForMe(D) :-
 	translate(D, 0, 0, X, Y),
@@ -835,10 +820,8 @@ availableAttachmentSpot(Xr, Yr) :-
 		Attachments = [] ->
 			member((Xr, Yr), [(1, 0), (0, 1), (-1, 0), (0, -1)])
 			;
-			(
-				[attachedToMe(Xa, Ya, _, _)] = Attachments,
-				rotation180(cw, Xa, Ya, Xr, Yr)
-			)
+			false
+			
 	).
 
 
@@ -877,18 +860,19 @@ exploreScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 	
+	
 disruptScore(D, VSum) :-
 	team(Team),
 	translate(D, 0, 0, Xr, Yr),
 	findall(Vd, 
-		(thing(Xt, Yt, entity, Team), distanceBetweenPoints_Manhattan(Xr, Yr, Xt, Yt, Vd)),
+		( (thing(X, Y, entity, Team) ; goalZone(X, Y)), distMan(Xr, Yr, X, Y, Vd)),
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 
 distanceScore(D, Xr, Yr, Score) :-
-	distMan(0, 0, Xr, Yr, CurrentDistance),
+	distanceBetweenPoints_Manhattan(0, 0, Xr, Yr, CurrentDistance),
 	translate(D, 0, 0, X_new, Y_new),
-	distMan(X_new, Y_new, Xr, Yr, NewDistance),
+	distanceBetweenPoints_Manhattan(X_new, Y_new, Xr, Yr, NewDistance),
 	Score is CurrentDistance - NewDistance.
 
 safeScore(D, Score) :-
@@ -897,7 +881,9 @@ safeScore(D, Score) :-
 		( Score = 0 ).
 
 epicenter(X, Y) :-
-	findall((Xc, Yc), (thing(Xc, Yc, marker, clear); thing(Xc, Yc, marker, ci)), StrikeZone),
+	findall((Xc, Yc), 
+		(thing(Xc, Yc, marker, clear) ; thing(Xc, Yc, marker, ci) ; thing(Xc, Yc, marker, cp)), 
+		StrikeZone),
 	StrikeZone \= [],
 	outerPoints(StrikeZone, [(WestX, _), (_, NorthY), (EastX, _), (_, SouthY)]),
 	X is (WestX + EastX)/2,
@@ -934,7 +920,14 @@ validClearingDirection(D, X, Y) :-
 moveDirection(D, Penalty, Action, Params) :-
 	(validDirection(D), Penalty = 0, Action = move, Params = [D]) ; 
 	(validDirectionAfterRotation(D, R), Penalty = 0.1, Action = rotate, Params = [R]) ; 
-	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.2, Action = clear, Params = [X, Y])).
+	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.5, Action = clear, Params = [X, Y])).
+
+
+extractAction(DirectionList, Action, Params) :-
+	reverseSort(DirectionList, DirectionListSorted),
+	DirectionListSorted = [(MaxScore, _, _, _)|_],
+	step(N), Seed is N mod(24), enumDirList(DL, Seed),
+	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionListSorted), S = MaxScore.
 
 exploreAction(Action, Params) :-
 	findall((Score, D, Action, Params),
@@ -942,30 +935,73 @@ exploreAction(Action, Params) :-
 		  	exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
 		 	Score is EScore + DScore + SScore - Penalty),
 	    	 DirectionValueList),
-	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
-	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
+	extractAction(DirectionValueList, Action, Params).
 
+approachingTeamMate(Xr, Yr, Direction) :-
+	false.
+	
+approachingEnemy(Xr, Yr, Direction) :-
+	false.
+	
+	
+goalZoneActionScore(Action, Params, GScore) :-
+	goalZoneDirection(D), 
+	(
+		false
+	).
+	
+goalZoneDirection(D) :-
+	nearestGoalZone(Xgc, Ygc),
+	generalDirection(Xgc, Ygc, D).
+	
+nearestGoalZone(X, Y) :-
+	goalZone(Xr, Yr) ->
+		(findall((Dist, Xr, Yr),
+			 (goalZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),
+			 GoalZones),
+		 sort(GoalZones, GoalZonesSorted),
+		 GoalZonesSorted = [(_, X, Y) |_]) ;
+		 
+		(findall((Dist, Xa, Ya),
+			 (goalCell(Xa, Ya), distanceBetweenPoints_Manhattan(0, 0, Xa, Ya, Dist)),
+			 GoalCells),
+		 sort(GoalCells, GoalCellsSorted),
+		 GoalCellsSorted = [(_, Xa2, Ya2) |_],
+		 relativePositionOfCoordinatesFromMe(Xa2, Ya2, X, Y)).
+	
+	
+generalDirection(Xr, Yr, D) :-
+	translate(Direction, 0, 0, Xr, Yr) ->
+		D = Direction ;
+		(abs(Xr, Xabs), abs(Yr, Yabs), Xabs > Yabs ->
+		     (Xr > 0 -> D = e ; D = w);
+		     (Yr > 0 -> D = n ; D = s)).
+
+exploreGoalZonesAction(Action, Params) :-
+	nearestGoalZone(Xr, Yr),
+	findall((Score, D, Action, Params),
+		 (moveDirection(D, Penalty, Action, Params),
+	  	  exploreScore(D, EScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
+	  	  distanceScore(D, Xr, Yr, DistScore),
+	 	  Score is EScore + 2 * DisruptScore + DistScore + SScore - Penalty),
+	    	 DirectionValueList),
+	extractAction(DirectionValueList, Action, Params).
+	
 
 goToAction(Xr, Yr, Action, Params) :-
 	findall((Score, D, Action, Params),
 		(moveDirection(D, Penalty, Action, Params), 
-			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
-			DScore >= 0, Score is (DScore + DisruptScore + EScore + SScore)
+			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
+			DScore >= 0, Score is (2 * DScore + EScore + SScore)
 		), 
 	    	 DirectionValueList),
-	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
-	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
+	extractAction(DirectionValueList, Action, Params).
 
 
 closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	findall((Dist, Xr, Yr, Type, Details), 
 		(
 			thing(Xr, Yr, Type, Details),
-			not((adjacent(Xr, Yr, Xa, Ya), thing(Xa, Ya, entity, _))),
 		 	(
 		 		(Type = block, not(attached(Xr, Yr))); 
 		 		(Type = dispenser)
@@ -988,10 +1024,18 @@ nearestRoleCell(X, Y) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %% roles.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
+canAttach :-
+ 	myRole(MyRole), canAttach(MyRole).
+ 	
  canAttach(Role) :-
  	role(Role, Vision, Actions, Speeds, ClearChance, ClearMaxDistance),
  	member(attach, Actions).
  	
+ 			
+maxClearDistance(MaxClearDistance) :-
+	myRole(MyRole),
+	role(MyRole, Vision, Actions, Speeds, ClearChance, MaxClearDistance).
+ 
 visionForRole(Role, Vision) :-
 	role(Role, Vision, _, _, _, _). 
  
@@ -1000,9 +1044,12 @@ visionForRole(Role, Vision) :-
 %% taskPlanning.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-availableGoalZones(GoalZones) :-
+availableGoalZones(AvailableGoalZones) :-
 	findall(goalCell(X, Y), goalCell(X, Y), GoalCells),
-	goalCellsToGoalZones(GoalCells, [], [], GoalZones).
+	goalCellsToGoalZones(GoalCells, [], [], GoalZones),
+	findall(GoalZone, 
+		(member(GoalZone, GoalZones), not(occupied(_, GoalZone))), 
+		AvailableGoalZones).
 
 goalCellsToGoalZones([], _, GoalZones, GoalZones).
 goalCellsToGoalZones([goalCell(X1, Y1)|Rest], CheckedCells, FoundZones, GoalZones) :-
@@ -1078,14 +1125,14 @@ extractRepliesForGoalCell(GoalCell, AllReplies, RepliesByGoalCell) :-
 		RepliesByGoalCell).
 			
 			
-findPlan(Task, Answers, TaskPlan) :-
-	bestAssignment(Task, Answers, Assignment, ETA),
+findPlan(Task, Answers, GoalZone, TaskPlan) :-
+	bestAssignment(Task, Answers, Assignment, GoalZone, ETA),
 	
 	buildTaskPlanFromAssignments(Task, Assignment, ETA, TaskPlan).
 		
 
 
-bestAssignment(Task, AllAnswers, BestAssignment, BestETA) :-
+bestAssignment(Task, AllAnswers, BestAssignment, BestGoalZone, BestETA) :-
 	Task = task(_, _, _, Requirements),
     
 	requirementsByBlockType(Requirements, ReqByBlockType),
@@ -1097,7 +1144,7 @@ bestAssignment(Task, AllAnswers, BestAssignment, BestETA) :-
 		),
 		PossibleAssignments),
 	
-	keysort(PossibleAssignments, [BestETA-BestAssignment|_]).
+	keysort(PossibleAssignments, [BestETA-(BestGoalZone, BestAssignment)|_]).
 
 
 bestAssigntmentForGoalZone(Task, GoalZone, Answers, Requirements, Assignment) :-
@@ -1120,7 +1167,7 @@ bestAssigntmentForGoalZone(Task, GoalZone, Answers, Requirements, Assignment) :-
 	step(Step),
 	ETA is Step + (BestMatchDistance),
 	ETA =< Deadline,
-	Assignment = ETA-BestMatch.
+	Assignment = ETA-(GoalZone, BestMatch).
 		
 		
 		
@@ -1137,12 +1184,14 @@ matchAgentsToRequirements(TaskName, GoalZone, Agents,
                           PartialMatch, Match) :-	
 			  
 	select((Agent, BlockList), Agents, AgentsRest),
-	member(Block, BlockList),
+	not(member((Agent, _, _, _, _, _, _), PartialMatch)),
+	member(Block, BlockList), 
 	Block = (BlockType, Dist, Stops, BlockQty),
 	
 	ReqQty =< BlockQty,
 	
-	agentOffset(Agent, OffsetX, OffsetY),
+	agentOffset(Agent, X, Y),
+	OffsetX is -X, OffsetY is -Y,
 	addOffset(OffsetX, OffsetY, GoalZone, OffsetGoalZone),
 	append(Stops, [OffsetGoalZone], Path),
 	AgentPlan = (Agent, TaskName, Dist, BlockType, ReqQty, Path, Positions),
@@ -1155,29 +1204,8 @@ matchAgentsToRequirements(TaskName, GoalZone, Agents,
 
 requirementsByBlockType(Requirements, FilteredRequirements) :-
 	findall((BlockType, 1, [(X, Y)]),
-		(
-			member(req(X, Y, BlockType), Requirements),
-			translate(_, 0, 0, X, Y)
-		),
-		SubmitAgentRequirements),
-	
-	findall(req(X, Y, BlockType),
-			(
-				member(req(X, Y, BlockType), Requirements),
-				not(translate(_, 0, 0, X, Y))
-			),
-			OtherRequirements),
-	
-	findall(BlockType, member(req(_, _, BlockType), OtherRequirements), BlockTypes),
-	setof((BlockType, Qty), (member(BlockType, BlockTypes), count(BlockTypes, BlockType, Qty)), Blocks),
-	findall((BlockType, Qty, Positions),
-		(
-			member((BlockType, Qty), Blocks),
-			findall((X, Y), member(req(X, Y, BlockType), OtherRequirements), Positions)
-		),
-		OtherRequirementsByBlockType),
-	
-	append(SubmitAgentRequirements, OtherRequirementsByBlockType, FilteredRequirements).	
+		member(req(X, Y, BlockType), Requirements),
+		FilteredRequirements).
 	
 	
 buildTaskPlanFromAssignments(Task, Assignments, ETA, TaskPlan) :-
@@ -1352,9 +1380,6 @@ deliveredBlock(AgentPlan, Connections, BlockInfo) :-
 	BlockInfo = (MyName, BlockType, X, Y, Dist).
 	
 	
-	
-	
-	
 patternCompleted(Connections) :-
 	not((
 		member((Agent, BlockType, Xr, Yr, _), Connections), 
@@ -1413,8 +1438,7 @@ allCloserBlocksInPlace(GoalCellXr, GoalCellYr, Connections, BlockDist) :-
 
 
 
-rotationRequiredTask(AgentXr, AgentYr, BlockType, BlockXr, BlockYr, R) :-
-	X is BlockXr - AgentXr, Y is BlockYr - AgentYr,
+rotationRequiredTask(BlockType, X, Y, R) :-
 	not(attachedToMe(X, Y, block, BlockType)),
 	attachedToMe(AttachedX, AttachedY, block, BlockType),
 	rotation(R, AttachedX, AttachedY, X, Y, Angle),
@@ -1422,6 +1446,17 @@ rotationRequiredTask(AgentXr, AgentYr, BlockType, BlockXr, BlockYr, R) :-
 			not(blockedRotation(R, 90));
 			(not(blockedRotation(R, 90)), not(blockedRotation(R, 180)))
 	).
+	
+clearRequiredTask(BlockType, X, Y, Xc, Yc) :-
+	not(attachedToMe(X, Y, block, BlockType)),
+	attachedToMe(AttachedX, AttachedY, block, BlockType),
+	rotation(R, AttachedX, AttachedY, X, Y, Angle),
+	(Angle = 90 ->
+			blockedRotation(R, 90) ;
+			(blockedRotation(R, 90) ; blockedRotation(R, 180))
+	),
+	translate(_, 0, 0, Xc, Yc), thing(Xc, Yc, obstacle, _).
+
 
 
 nextBlockPosition_submitAgent(Connections, BlockType, BlockXr, BlockYr) :-
@@ -1582,8 +1617,6 @@ distanceFromSourceToDestinationByDimension_rectangle(SourceX, SourceY, Destinati
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %% utility.pl 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
-
 obstacle(Xr, Yr) :-
 	thing(Xr, Yr, obstacle, _).
 			
@@ -1606,10 +1639,15 @@ nameToNumber(Name, Number) :-
  	string_concat("Channel", Number, Channel).
 
  	
-taskToChannel(TaskMaster, TaskName, ChannelName) :-
-	string_concat(TaskMaster, "_", FirstHalf),
- 	string_concat(TaskName, "_Channel", SecondHalf),
- 	string_concat(FirstHalf, SecondHalf, ChannelName).
+taskToChannel(TaskMaster, TaskPlan, ChannelName) :-
+	TaskPlan = taskPlan(_, TaskName, _, _, _, _, Connections),
+	member((SubmitAgent, _, _, _, 1), Connections),
+	string_concat(TaskMaster, "_", First),
+ 	string_concat(TaskName, "_", Second),
+ 	string_concat(SubmitAgent, "_Channel", Third),
+ 	string_concat(First, Second, S1),
+ 	string_concat(S1, Third, ChannelName).
+ 	
  	
 
 abs(X1, X2) :- X1 < 0, !, X2 is -X1.

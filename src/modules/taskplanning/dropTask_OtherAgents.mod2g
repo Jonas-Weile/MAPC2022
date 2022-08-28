@@ -7,8 +7,11 @@ module dropTask_OtherAgents {
 		if true then delete(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)).
 		
 		if bel(taskMaster(TaskMaster)),
-		   bel(taskToChannel(TaskMaster, TaskName, Channel))
+		   bel(taskToChannel(TaskMaster, taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), Channel))
 		then unsubscribe(Channel).
+		
+		
+		if true then print("Dropping task: ") + print(TaskName).
 	}
 		
 	forall bel(taskPlanToDo(ToDO))

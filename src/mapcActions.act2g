@@ -59,11 +59,6 @@ define survey(X, Y) with
 	pre { true }
 	post { true }
 
-% accept
-define accept(TaskName) with
-	pre { true }
-	post{ true }
-		
 % skip
 define skip with
 	pre { true }

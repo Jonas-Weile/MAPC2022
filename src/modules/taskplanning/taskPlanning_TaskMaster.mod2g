@@ -32,20 +32,27 @@ module taskPlanning_TaskMaster {
 		
 		% Combine new answers with saved answers and - Do the planning -
 		if bel(getResourceReplies(Task,  GoalCells, Answers)),
-		   bel(findPlan(Task, Answers, TaskPlan)),
+		   bel(findPlan(Task, Answers, GoalZone, TaskPlan)),
 		   bel(TaskPlan \= [])
 		then {		
-			%%% DEBUG	
-			if true then print("TaskPlan: ") + print(TaskPlan).
 					
-			% % Create task-channel
-			% if  bel(name(MyName)),
-			%	  bel(taskToChannel(MyName, TaskName, Channel)) 
-			% then subscribe(Channel).
-			% 
-			% forall bel(member((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), TaskPlan)) do
-			% 	(Agent).send!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) +
-			% 	insert(occupied(TaskName, Agent)).		
+			if  bel(name(MyName)),
+				bel(Task = task(TaskName, _, _, _))
+			then {
+				if true 
+				then insert(taskPlan(TaskPlan)) + 
+				insert(occupied(TaskName, GoalZone)) + 
+				print("TaskPlan: ") + 
+				print(TaskPlan).
+				
+				% Create task-channel
+				if bel(taskToChannel(MyName, TaskPlan, Channel)) 
+				then subscribe(Channel).
+			}
+			
+			forall bel(member((Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), TaskPlan)) do
+				(Agent).send!(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) +
+				insert(occupied(TaskName, Agent)).		
 		}
 				
 		% Delete all saved replies
@@ -82,16 +89,20 @@ module taskPlanning_TaskMaster {
 	% Delete tasks
 	forall bel(deleteTask(TaskName))
 	do {
+		if true then print("Instrucing to drop task: ") + print(TaskName).
+		
 		if bel(name(MyName)) then {
 			forall bel(occupied(TaskName, Thing)) do
 			delete(occupied(TaskName, Thing)).
 			
 			if bel(taskPlan(TaskPlan)),
 			   bel(member((_, TaskName, _, _, _, _, _), TaskPlan))
-			then delete(taskPlan(TaskPlan)).
+			then {
+				if true then delete(taskPlan(TaskPlan)).
 			
-			if bel(taskToChannel(MyName, TaskName, Channel))
-			then unsubscribe(Channel).
+				if bel(taskToChannel(MyName, TaskPlan, Channel))
+				then unsubscribe(Channel).
+			}
 						
 			if true then delete(deleteTask(TaskName)).			
 		}

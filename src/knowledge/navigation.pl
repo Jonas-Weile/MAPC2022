@@ -43,25 +43,15 @@ attachedToMe(Xr, Yr, Type, Details) :-
 	thing(Xr, Yr, Type, Details),
 	(Type = block; Type = entity).	
 
-% TODO - check usage and clean!
-connectedBlocks(Dir, AllConnectedBlocks) :-
-	translate(Dir, 0, 0, X, Y),
-	connectionFromTo(X, Y, Agent),
-	foldl(connectedBlocks_folder, [(X, Y, Agent)],  [(X, Y, Agent)], AllConnectedBlocks).
 
-connectedBlocks_folder((X, Y, Agent), OldConnections, AllConnectedBlocks) :-
-	findall((BlockX, BlockY, Agent),
-		(
-			connectionFromTo(BlockX, BlockY, Agent),
-			translate(_, X, Y, BlockX, BlockY),
-			not(member((BlockX, BlockY, Agent), OldConnections))
-			
-		),
-		NewConnections),
-	list_to_ord_set(NewConnections, NewConnections_ord),
-	ord_union(OldConnections, NewConnections_ord, ConnectedBlocks_ord),
-	foldl(connectedBlocks_folder, NewConnections_ord,  ConnectedBlocks_ord, AllConnectedBlocks).
-	
+furthestConnectionFromTo(X1, Y1, X2, Y2) :-
+	findall((Dist, X3, Y3, X4, Y4),
+		connectionFromTo(X3, Y3, X4, Y4, _),
+		Connections),
+	Connections \= [],
+	reverseSort(Connections, ConnectionsSorted),
+	ConnectionsSorted = [(_, X1, Y1, X2, Y2)|_].
+
 
 % Returns true if the position (Xr, Yr) contains an impassable object.	
 impassable(X, Y) :- obstacle(X, Y).
@@ -71,6 +61,10 @@ impassable(X, Y) :- thing(X, Y, block, BlockType), not(attachedToMe(X, Y, block,
 % Check whether a direction is blocked
 blocked(D) :- 
 	blockedForMe(D) ; blockedForMyAttachments(D).
+
+blocked(Xr, Yr) :-
+	impassable(X, Y).
+
 
 blockedForMe(D) :-
 	translate(D, 0, 0, X, Y),
@@ -118,11 +112,14 @@ availableAttachmentSpot(Xr, Yr) :-
 		Attachments = [] ->
 			member((Xr, Yr), [(1, 0), (0, 1), (-1, 0), (0, -1)])
 			;
+			% OBS!! - TESTING IF ATTACHING ONLY 1 BLOCK MAKES SENSE
+			false
+			
 			% Otherwise, it should be opposite the block already attached
-			(
-				[attachedToMe(Xa, Ya, _, _)] = Attachments,
-				rotation180(cw, Xa, Ya, Xr, Yr)
-			)
+			%(
+			%	[attachedToMe(Xa, Ya, _, _)] = Attachments,
+			%	rotation180(cw, Xa, Ya, Xr, Yr)
+			%)
 	).
 
 
@@ -166,18 +163,20 @@ exploreScore(D, VSum) :-
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 	
+	
+% Stay away from teammates and goalzones
 disruptScore(D, VSum) :-
 	team(Team),
 	translate(D, 0, 0, Xr, Yr),
 	findall(Vd, 
-		(thing(Xt, Yt, entity, Team), distanceBetweenPoints_Manhattan(Xr, Yr, Xt, Yt, Vd)),
+		( (thing(X, Y, entity, Team) ; goalZone(X, Y)), distMan(Xr, Yr, X, Y, Vd)),
 		VScoreList),
 	listSum(VScoreList, VSum, _).
 
 distanceScore(D, Xr, Yr, Score) :-
-	distMan(0, 0, Xr, Yr, CurrentDistance),
+	distanceBetweenPoints_Manhattan(0, 0, Xr, Yr, CurrentDistance),
 	translate(D, 0, 0, X_new, Y_new),
-	distMan(X_new, Y_new, Xr, Yr, NewDistance),
+	distanceBetweenPoints_Manhattan(X_new, Y_new, Xr, Yr, NewDistance),
 	Score is CurrentDistance - NewDistance.
 
 safeScore(D, Score) :-
@@ -187,7 +186,9 @@ safeScore(D, Score) :-
 
 % Find the epicenter of a clear event
 epicenter(X, Y) :-
-	findall((Xc, Yc), (thing(Xc, Yc, marker, clear); thing(Xc, Yc, marker, ci)), StrikeZone),
+	findall((Xc, Yc), 
+		(thing(Xc, Yc, marker, clear) ; thing(Xc, Yc, marker, ci) ; thing(Xc, Yc, marker, cp)), 
+		StrikeZone),
 	StrikeZone \= [],
 	outerPoints(StrikeZone, [(WestX, _), (_, NorthY), (EastX, _), (_, SouthY)]),
 	X is (WestX + EastX)/2,
@@ -225,7 +226,16 @@ validClearingDirection(D, X, Y) :-
 moveDirection(D, Penalty, Action, Params) :-
 	(validDirection(D), Penalty = 0, Action = move, Params = [D]) ; 
 	(validDirectionAfterRotation(D, R), Penalty = 0.1, Action = rotate, Params = [R]) ; 
-	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.2, Action = clear, Params = [X, Y])).
+	((energy(E), clearEnergyCost(C), E > C) -> (validClearingDirection(D, X, Y), Penalty = 0.5, Action = clear, Params = [X, Y])).
+
+
+% Helper function used in exploreAction, exploreGoalZonesAction and goToAction.
+% Extracts a semi-random Action among the highest ranked ones.
+extractAction(DirectionList, Action, Params) :-
+	reverseSort(DirectionList, DirectionListSorted),
+	DirectionListSorted = [(MaxScore, _, _, _)|_],
+	step(N), Seed is N mod(24), enumDirList(DL, Seed),
+	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionListSorted), S = MaxScore.
 
 % Find the best action in order to explore the map.
 % Action is one of:
@@ -238,11 +248,69 @@ exploreAction(Action, Params) :-
 		  	exploreScore(D, EScore), disruptScore(D, DScore), safeScore(D, SScore), 
 		 	Score is EScore + DScore + SScore - Penalty),
 	    	 DirectionValueList),
-	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
-	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
+	extractAction(DirectionValueList, Action, Params).
 
+% TODO
+approachingTeamMate(Xr, Yr, Direction) :-
+	false.
+	
+% TODO
+approachingEnemy(Xr, Yr, Direction) :-
+	false.
+	
+	
+% TODO
+% Heuristic to evaluate an action in the vicinity of the goalZone.
+goalZoneActionScore(Action, Params, GScore) :-
+	goalZoneDirection(D), 
+	(
+		false
+	).
+	
+goalZoneDirection(D) :-
+	nearestGoalZone(Xgc, Ygc),
+	generalDirection(Xgc, Ygc, D).
+	
+% Find the nearest goalZOne for the Agent.
+nearestGoalZone(X, Y) :-
+	goalZone(Xr, Yr) ->
+		(findall((Dist, Xr, Yr),
+			 (goalZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),
+			 GoalZones),
+		 sort(GoalZones, GoalZonesSorted),
+		 GoalZonesSorted = [(_, X, Y) |_]) ;
+		 
+		(findall((Dist, Xa, Ya),
+			 (goalCell(Xa, Ya), distanceBetweenPoints_Manhattan(0, 0, Xa, Ya, Dist)),
+			 GoalCells),
+		 sort(GoalCells, GoalCellsSorted),
+		 GoalCellsSorted = [(_, Xa2, Ya2) |_],
+		 relativePositionOfCoordinatesFromMe(Xa2, Ya2, X, Y)).
+	
+	
+% Extract the general direction of a (maybe) distant point.
+generalDirection(Xr, Yr, D) :-
+	translate(Direction, 0, 0, Xr, Yr) ->
+		D = Direction ;
+		(abs(Xr, Xabs), abs(Yr, Yabs), Xabs > Yabs ->
+		     (Xr > 0 -> D = e ; D = w);
+		     (Yr > 0 -> D = n ; D = s)).
+
+% Find the best action in order to EXPLORE NEAR GOALZONES.
+% Action is one of:
+%	- move(Direction)
+%	- rotate(Rotation)
+%	- clear(X, Y)	
+exploreGoalZonesAction(Action, Params) :-
+	nearestGoalZone(Xr, Yr),
+	findall((Score, D, Action, Params),
+		 (moveDirection(D, Penalty, Action, Params),
+	  	  exploreScore(D, EScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
+	  	  distanceScore(D, Xr, Yr, DistScore),
+	 	  Score is EScore + 2 * DisruptScore + DistScore + SScore - Penalty),
+	    	 DirectionValueList),
+	extractAction(DirectionValueList, Action, Params).
+	
 
 % Find the best action in order to move towards the location (Xr, Yr).
 % Action is one of:
@@ -252,14 +320,11 @@ exploreAction(Action, Params) :-
 goToAction(Xr, Yr, Action, Params) :-
 	findall((Score, D, Action, Params),
 		(moveDirection(D, Penalty, Action, Params), 
-			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), disruptScore(D, DisruptScore), safeScore(D, SScore), 
-			DScore >= 0, Score is (DScore + DisruptScore + EScore + SScore)
+			exploreScore(D, EScore), distanceScore(D, Xr, Yr, DScore), safeScore(D, SScore), 
+			DScore >= 0, Score is (2 * DScore + EScore + SScore)
 		), 
 	    	 DirectionValueList),
-	reverseSort(DirectionValueList, DirectionValueListSorted),
-	DirectionValueListSorted = [(MaxScore, _, _, _)|_],
-	step(N), Seed is N mod(24), enumDirList(DL, Seed),
-	member(Direction, DL), 	member((S, Direction, Action, Params), DirectionValueListSorted), S = MaxScore.
+	extractAction(DirectionValueList, Action, Params).
 
 
 % Find the closest block/dispenser in vision without any nearby agents
@@ -267,7 +332,6 @@ closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	findall((Dist, Xr, Yr, Type, Details), 
 		(
 			thing(Xr, Yr, Type, Details),
-			not((adjacent(Xr, Yr, Xa, Ya), thing(Xa, Ya, entity, _))),
 		 	(
 		 		(Type = block, not(attached(Xr, Yr))); 
 		 		(Type = dispenser)
@@ -279,6 +343,7 @@ closestBlockOrDispenserInVision(Xr, Yr, Type, Details) :-
 	sort(Things, SortedThings),
 	member((_, Xr, Yr, Type, Details), SortedThings).
 	
+% Find the nearest roleCell for the Agent.
 nearestRoleCell(X, Y) :-
 	findall((Dist, Xr, Yr),
 		(roleZone(Xr, Yr), distMan(0, 0, Xr, Yr, Dist)),

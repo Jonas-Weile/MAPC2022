@@ -1,9 +1,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% PLANNING - TASKMASTER %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Convert goalCells to distinct goalZones.
-availableGoalZones(GoalZones) :-
+availableGoalZones(AvailableGoalZones) :-
 	findall(goalCell(X, Y), goalCell(X, Y), GoalCells),
-	goalCellsToGoalZones(GoalCells, [], [], GoalZones).
+	goalCellsToGoalZones(GoalCells, [], [], GoalZones),
+	findall(GoalZone, 
+		(member(GoalZone, GoalZones), not(occupied(_, GoalZone))), 
+		AvailableGoalZones).
 
 goalCellsToGoalZones([], _, GoalZones, GoalZones).
 goalCellsToGoalZones([goalCell(X1, Y1)|Rest], CheckedCells, FoundZones, GoalZones) :-
@@ -97,9 +100,9 @@ extractRepliesForGoalCell(GoalCell, AllReplies, RepliesByGoalCell) :-
 			
 			
 % Create tasksplan!
-findPlan(Task, Answers, TaskPlan) :-
+findPlan(Task, Answers, GoalZone, TaskPlan) :-
 	% Find the best possible assignment for the given task
-	bestAssignment(Task, Answers, Assignment, ETA),
+	bestAssignment(Task, Answers, Assignment, GoalZone, ETA),
 	
 	% Build the plan
 	buildTaskPlanFromAssignments(Task, Assignment, ETA, TaskPlan).
@@ -107,7 +110,7 @@ findPlan(Task, Answers, TaskPlan) :-
 
 
 % Recursively find best assignment - check each goalcell
-bestAssignment(Task, AllAnswers, BestAssignment, BestETA) :-
+bestAssignment(Task, AllAnswers, BestAssignment, BestGoalZone, BestETA) :-
 	Task = task(_, _, _, Requirements),
     
 	% Extract the blocks from the requirements - make each agent deliver 1 blocktype
@@ -122,7 +125,7 @@ bestAssignment(Task, AllAnswers, BestAssignment, BestETA) :-
 		PossibleAssignments),
 	
 	% Sort the assignments and make sure we stay within the deadline
-	keysort(PossibleAssignments, [BestETA-BestAssignment|_]).
+	keysort(PossibleAssignments, [BestETA-(BestGoalZone, BestAssignment)|_]).
 
 
 % Find the best assignment for specific goalZone.
@@ -150,7 +153,7 @@ bestAssigntmentForGoalZone(Task, GoalZone, Answers, Requirements, Assignment) :-
 	step(Step),
 	ETA is Step + (BestMatchDistance),
 	ETA =< Deadline,
-	Assignment = ETA-BestMatch.
+	Assignment = ETA-(GoalZone, BestMatch).
 		
 		
 		
@@ -172,14 +175,16 @@ matchAgentsToRequirements(TaskName, GoalZone, Agents,
 			  
 	% Find an agent from answers and check what block it can deliver
 	select((Agent, BlockList), Agents, AgentsRest),
-	member(Block, BlockList),
+	not(member((Agent, _, _, _, _, _, _), PartialMatch)),
+	member(Block, BlockList), 
 	Block = (BlockType, Dist, Stops, BlockQty),
 	
 	% Ensure the agent can deliver the necessary quantity
 	ReqQty =< BlockQty,
 	
 	% Append the goalZone to the agentplan
-	agentOffset(Agent, OffsetX, OffsetY),
+	agentOffset(Agent, X, Y),
+	OffsetX is -X, OffsetY is -Y,
 	addOffset(OffsetX, OffsetY, GoalZone, OffsetGoalZone),
 	append(Stops, [OffsetGoalZone], Path),
 	AgentPlan = (Agent, TaskName, Dist, BlockType, ReqQty, Path, Positions),
@@ -191,36 +196,12 @@ matchAgentsToRequirements(TaskName, GoalZone, Agents,
 
 
 
-% Collect requirements into sets by distance and blocktype.	
+% Collect requirements into sets by distance and blocktype.
+%%% OBS!! - Has been modified to accomodate only single block attachments
 requirementsByBlockType(Requirements, FilteredRequirements) :-
-	% First, find all the inner blocks
 	findall((BlockType, 1, [(X, Y)]),
-		(
-			member(req(X, Y, BlockType), Requirements),
-			translate(_, 0, 0, X, Y)
-		),
-		SubmitAgentRequirements),
-	
-	% Find outer blocks
-	findall(req(X, Y, BlockType),
-			(
-				member(req(X, Y, BlockType), Requirements),
-				not(translate(_, 0, 0, X, Y))
-			),
-			OtherRequirements),
-	
-	% Order the other requirements by block type
-	findall(BlockType, member(req(_, _, BlockType), OtherRequirements), BlockTypes),
-	setof((BlockType, Qty), (member(BlockType, BlockTypes), count(BlockTypes, BlockType, Qty)), Blocks),
-	findall((BlockType, Qty, Positions),
-		(
-			member((BlockType, Qty), Blocks),
-			findall((X, Y), member(req(X, Y, BlockType), OtherRequirements), Positions)
-		),
-		OtherRequirementsByBlockType),
-	
-	% Append the requirements
-	append(SubmitAgentRequirements, OtherRequirementsByBlockType, FilteredRequirements).	
+		member(req(X, Y, BlockType), Requirements),
+		FilteredRequirements).
 	
 	
 buildTaskPlanFromAssignments(Task, Assignments, ETA, TaskPlan) :-
@@ -423,9 +404,6 @@ deliveredBlock(AgentPlan, Connections, BlockInfo) :-
 	BlockInfo = (MyName, BlockType, X, Y, Dist).
 	
 	
-	
-	
-	
 patternCompleted(Connections) :-
 	not((
 		member((Agent, BlockType, Xr, Yr, _), Connections), 
@@ -491,8 +469,7 @@ allCloserBlocksInPlace(GoalCellXr, GoalCellYr, Connections, BlockDist) :-
 
 
 
-rotationRequiredTask(AgentXr, AgentYr, BlockType, BlockXr, BlockYr, R) :-
-	X is BlockXr - AgentXr, Y is BlockYr - AgentYr,
+rotationRequiredTask(BlockType, X, Y, R) :-
 	not(attachedToMe(X, Y, block, BlockType)),
 	attachedToMe(AttachedX, AttachedY, block, BlockType),
 	rotation(R, AttachedX, AttachedY, X, Y, Angle),
@@ -500,6 +477,17 @@ rotationRequiredTask(AgentXr, AgentYr, BlockType, BlockXr, BlockYr, R) :-
 			not(blockedRotation(R, 90));
 			(not(blockedRotation(R, 90)), not(blockedRotation(R, 180)))
 	).
+	
+clearRequiredTask(BlockType, X, Y, Xc, Yc) :-
+	not(attachedToMe(X, Y, block, BlockType)),
+	attachedToMe(AttachedX, AttachedY, block, BlockType),
+	rotation(R, AttachedX, AttachedY, X, Y, Angle),
+	(Angle = 90 ->
+			blockedRotation(R, 90) ;
+			(blockedRotation(R, 90) ; blockedRotation(R, 180))
+	),
+	translate(_, 0, 0, Xc, Yc), thing(Xc, Yc, obstacle, _).
+
 
 
 nextBlockPosition_submitAgent(Connections, BlockType, BlockXr, BlockYr) :-

@@ -32,10 +32,10 @@ module receiveConnectionRequests {
 					then insert(newConnection(AgentName, OffsetXFromMyOrigin, OffsetYFromMyOrigin)) + print("new connection: ") + print(AgentName).
 						
 					%%% TODO %%%
-					if bel(agentOffset(AgentName, OtherOffsetX, OtherOffsetY)),
-					   bel(findCircumferencesFromOffsets(OffsetXFromMyOrigin, OffsetYFromMyOrigin, OtherOffsetX, OtherOffsetY, L)),
-					   bel(findBestMapDimensions(L, MapDimensions))
-					then all.send!(newDimensions(MapDimensions)) +	print(MapDimensions).
+					%if bel(agentOffset(AgentName, OtherOffsetX, OtherOffsetY)),
+					%   bel(findCircumferencesFromOffsets(OffsetXFromMyOrigin, OffsetYFromMyOrigin, OtherOffsetX, OtherOffsetY, L)),
+					%   bel(findBestMapDimensions(L, MapDimensions))
+					%then all.send!(newDimensions(MapDimensions)) +	print(MapDimensions).
 				}
 			}
 			

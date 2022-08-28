@@ -30,8 +30,7 @@ module updateBeliefState {
 		}		
 		
 		% accepting or submitting a task
-		if bel(lastAction(accept), P = [Task]) then	insert(accepted(Task)).
-		if bel(lastAction(submit), P = [Task]) then	insert(submitted(Task)).
+		if bel(lastAction(submit), P = [Task]) then	insert(submitted(Task)) + print("Submitted task!").
 		
 		
 		% Connecting a block
@@ -48,19 +47,13 @@ module updateBeliefState {
 		
 		
 		% disconnecting a block
-		if bel(lastAction(disconnect), P = [X1, Y1, _, _]),
+		if bel(lastAction(disconnect), P = [X1, Y1, X2, Y2]),
 		   bel(atom_number(X1, X1_num)),
 		   bel(atom_number(Y1, Y1_num)),
-		   bel(translate(Dir, 0, 0, X1_num, Y1_num)),
-		   bel(connectedBlocks(Dir, ConnectedBlocks))
-		then {
-			forall bel(member((BlockX, BlockY, Agent), ConnectedBlocks)) 
-		  	do {
-		  		if true then delete(connectionFromTo(BlockX, BlockY, Agent)).
-		  		if bel(connectionFromTo(BlockX, BlockY, ToX, ToY, Agent))
-		  		then delete(connectionFromTo(BlockX, BlockY, ToX, ToY, Agent)).
-		  	}
-		}
+		   bel(atom_number(X2, X2_num)),
+		   bel(atom_number(Y2, Y2_num)),
+		   bel(connectionFromTo(X1_num, Y1_num, X2_num, Y2_num, Agent))
+  		then delete(connectionFromTo(X1_num, Y1_num, X2_num, Y2_num, Agent)).
 		
 		% Attaching a block
 		if bel(lastAction(attach), P = [Dir]),
@@ -72,12 +65,7 @@ module updateBeliefState {
 			 
 			if bel(translate(Dir, 0, 0, Xr, Yr)),
 			   bel(attachedToMe(Xr, Yr))
-			then delete(attachedToMe(Xr, Yr)).
-				   
-		   	if bel(connectedBlocks(Dir, ConnectedBlocks)) then {
-		  	  	forall bel(member((BlockX, BlockY, Agent), ConnectedBlocks)) 
-		  	   		do delete(connectionFromTo(BlockX, BlockY, Agent)).
-		   }
+			then delete(attachedToMe(Xr, Yr)) + print("Detached").
 		}
 		
 		% Rotating
@@ -87,27 +75,6 @@ module updateBeliefState {
 			do {
 			    	if true then delete(attachedToMe(Xa, Ya)).
 			    	if true then insert(attachedToMe(Xa_rot, Ya_rot)).
-			}
-		}
-	
-	
-		% Clear
-		if bel(lastAction(clear)),
-		   bel(P = [AtomX, AtomY]), 
-		   bel(atom_number(AtomX, X), atom_number(AtomY, Y)) 
-		then {
-			if bel(clearStepsCounter(Steps), IncSteps is Steps +1) 
-			then delete(clearStepsCounter(Steps)) + insert(clearStepsCounter(IncSteps)).
-			
-			if bel(completedClearAction(OldEnergy)), 
-			   bel(energy(NewEnergy), OldEnergy > NewEnergy),
-			   bel(clearStepsCounter(ClearSteps)),
-			   bel(ClearEnergyCost is (OldEnergy - NewEnergy - 1)/ClearSteps) 
-			then {
-				if true then delete(completedClearAction(OldEnergy)).
-				if true then delete(clearStepsCounter(ClearSteps)) + insert(clearStepsCounter(0)).
-				if bel(clearSteps(OldSteps), OldSteps =\= ClearSteps)  then delete(clearSteps(OldSteps)) + insert(clearSteps(ClearSteps)).
-				if bel(clearEnergyCost(ActionCost), ActionCost =\= ClearEnergyCost)  then delete(clearEnergyCost(ActionCost)) + insert(clearEnergyCost(ClearEnergyCost)).
 			}
 		}
 	}	
@@ -126,7 +93,7 @@ module updateBeliefState {
 				
 	% Remove attached		
 	forall bel(attachedToMe(Xr, Yr)), not(bel(attached(Xr, Yr))) 
-		do delete(attachedToMe(Xr, Yr)).
+		do delete(attachedToMe(Xr, Yr)) + print("Removed attachment").
 	
 	
 	%%%%%%%%% Update beliefs about connected blocks %%%%%%%%%%%%%%%%%%%%
@@ -160,7 +127,7 @@ module updateBeliefState {
 	%%%%%%%%% DEACTIVATED - If the agent was deactivated, clear all attachements %%%%%%%%%
 	if bel(deactivated(true)) then {
 		forall bel(attachedToMe(X, Y))
-			do delete(attachedToMe(X, Y)).
+			do delete(attachedToMe(X, Y)) + print("Detached").
 			
 		forall bel(connectionFromTo(BlockX, BlockY, Agent))
 		    do delete(connectionFromTo(BlockX, BlockY, Agent)).

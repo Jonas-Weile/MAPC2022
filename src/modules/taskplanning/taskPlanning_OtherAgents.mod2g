@@ -4,7 +4,7 @@ use "dropTask_OtherAgents" as module.
 module taskPlanning_OtherAgents {
 
 	% Update existing task plan
-	if bel(taskPlan(_, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)),
+	if bel(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)),
 	   bel(taskMaster(TaskMaster)),
 	   bel(name(MyName)),
 	   bel(step(Step))
@@ -16,8 +16,8 @@ module taskPlanning_OtherAgents {
 		then insert(blockDelivered(BlockInfo)).
 	
 		% Drop task - Here we should manage detaching and clearing as well!
-		if (_).sent!(dropTask(TaskName)) then dropTask_OtherAgents.
-		if not(bel(task(TaskName, _, _, _))) then dropTask_OtherAgents.
+		if (_).sent!(dropTask(TaskName)) then dropTask_OtherAgents + print("drop1").
+		if not(bel(task(TaskName, _, _, _))) then dropTask_OtherAgents + print("drop2").
 		% if bel(Step > ETA) then dropTask_OtherAgents.
 		
 		% Update taskplan
@@ -45,9 +45,9 @@ module taskPlanning_OtherAgents {
 						insert(taskPlanToDo(NewTaskPlanToDo)).
 					
 					if not(bel(Step + ShortestDist < ETA)),
-					   bel(taskToChannel(TaskMaster, TaskName, Channel))
+					   bel(taskToChannel(TaskMaster, taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), Channel))
 					then (Channel).send!(dropTask(TaskName)) +
-					     dropTask_OtherAgents.
+					     dropTask_OtherAgents + print("drop3").
 				}
 			}
 		
@@ -73,10 +73,10 @@ module taskPlanning_OtherAgents {
 		   			if bel(NrOfRemainingToDos = 0) then {
 		   					
 		   				if bel(submitAgent(MyName)),
-		   				   bel(taskToChannel(TaskMaster, TaskName, Channel))
+		   				   bel(taskToChannel(TaskMaster, taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), Channel))
 		   				then (Channel).send!(taskSubmitted(TaskName)).
 		   				
-		   				if true then dropTask_OtherAgents.
+		   				if true then dropTask_OtherAgents  + print("drop4").
 		   			}		
 		   		}		   		
 			}
@@ -85,15 +85,16 @@ module taskPlanning_OtherAgents {
 
 
 
+
 	% Check for any single-block tasks that I can solve myself
-	if bel(simpleTask(Task), canSolveSimpleTask(Task, TaskPlan)) then {
+	if bel(canAttach, simpleTask(Task), canSolveSimpleTask(Task, TaskPlan)) then {
 		% Adopt the task!
 		
 	}
 
 
 	% If I don't have a task, then answer information requests
-	if not(bel(taskPlan(_, _, _, _, _, _, _))) then {
+	if bel(canAttach), not(bel(taskPlan(_, _, _, _, _, _, _))) then {
 		
 		% Answer requests
 		forall (TaskMaster).sent?(resourceRequest(Task, GoalCells)) do {
@@ -108,7 +109,7 @@ module taskPlanning_OtherAgents {
 			% Ensure we only received 1 task plan
 			if bel(member([Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections, TaskMaster], TaskPlans)) then {								
 				if bel(taskMaster(TaskMaster)) then {
-					if bel(taskToChannel(TaskMaster, TaskName, Channel)) 
+					if bel(taskToChannel(TaskMaster, taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections), Channel)) 
 					then insert(taskPlan(Agent, TaskName, ETA, AgentPlan, BlockType, BlockQty, Connections)) + 
 						 insert(taskPlanToDo(AgentPlan)) +
 						 subscribe(Channel).

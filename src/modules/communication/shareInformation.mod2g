@@ -19,12 +19,9 @@ module shareInformation {
 				
 				if bel(poloidalCircumference(OldPC)),
 				   bel(PC \= OldPC)
-				then {
-					if bel(gcd_helper(PC, OldPC, NewPC))
-					then delete(poloidalCircumference(OldPC)) +
-					     insert(poloidalCircumference(NewPC)) +
-					     updateMap.
-				}
+				then delete(poloidalCircumference(OldPC)) +
+				     insert(poloidalCircumference(PC)) +
+				     updateMap.
 			}
 		
 			if bel(member(toroidalCircumference(TC), Dimensions)) then {
@@ -35,12 +32,9 @@ module shareInformation {
 				
 				if bel(toroidalCircumference(OldTC)),
 				   bel(TC \= OldTC)
-				then {
-					if bel(gcd_helper(TC, OldTC, NewTC))
-					then delete(toroidalCircumference(OldTC)) +
-					     insert(toroidalCircumference(NewTC)) +
+				then delete(toroidalCircumference(OldTC)) +
+					     insert(toroidalCircumference(TC)) +
 					     updateMap.
-				}
 			}
 		}
 	}

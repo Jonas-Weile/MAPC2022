@@ -30,14 +30,6 @@ module getPercepts {
 		then delete(lastActionParams(P)).
 	if percept(lastActionParams(P))
 		then insert(lastActionParams(P)).	
-
-	
-	%%%%%%%%%%%%%%%%%%%% PERCEIVE ENERGY %%%%%%%%%%%%%%%%%%%%
-	if bel(energy(OldLevel)), percept(energy(NewLevel))
-	  then {
-		if true then delete(energy(OldLevel)) + insert(energy(NewLevel)).
-		if bel(OldLevel > NewLevel) then insert(completedClearAction(OldLevel)).
-	}	
 		
 	
 	%%%%%%%%%%%%%%%%%%%% PERCEIVE DEACTIVATION %%%%%%%%%%%%%%%%%%%%
@@ -121,4 +113,16 @@ module getPercepts {
 		do insert(attached(Xr, Yr)).
 	forall bel(attached(Xr, Yr)), not(percept(attached(Xr, Yr))) 
 		do delete(attached(Xr, Yr)).	
+		
+		
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE ENERGY %%%%%%%%%%%%%%%%%%%%
+	if bel(energy(OldLevel)), percept(energy(NewLevel))
+	  then {
+		if true then delete(energy(OldLevel)) + insert(energy(NewLevel)).
+		
+		% Deduce the cost of clearing
+		if bel(lastActionResult(succes), lastAction(clear)), not(bel(violation(_))),
+		   bel(Actual is OldLevel - NewLevel), bel(clearEnergyCost(Initital))
+		then delete(clearEnergyCost(Initital)) + insert(clearEnergyCost(Actual)).
+	}	
 }

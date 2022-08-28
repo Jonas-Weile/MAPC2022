@@ -1,10 +1,10 @@
 {
   "scenario": "assemble2020",
-  "host": "localhost",
+  "host": "agentcontest1.in.tu-clausthal.de",
   "port": 12300,
   "scheduling": true,
   "only-once": false,
-  "timeout": 3000000,
+  "timeout": 100000,
   "times": false,
   "notifications": false,
   "queued": false,  
@@ -12,7 +12,7 @@
     {
       "name-prefix": "agentGOAL-DTU",
       "username-prefix": "agentGOAL-DTU",
-      "password": "ZwYQgr1",
+      "password": "ebn49db",
       "print-iilang": false,
       "print-json": false,
       "start-index": 1,

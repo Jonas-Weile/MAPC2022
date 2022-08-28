@@ -55,9 +55,11 @@ module goTo {
 			
 		% Perform a-star search, but without clearing
 		% TODO - make sure it works as expected - could we use just one of the two??
+		if true then print("Starting A* search w/o clearing").
 		if bel(astarNoClear(XGoalr, YGoalr, AbsolutePath, ActionPlan)),
 		   bel(ActionPlan = [FirstAction|_])
 		then {			
+			if true then print("Found action plan: ") + print(ActionPlan).
 		    if bel(findWaypoints(AbsolutePath, Waypoints))
 			then insert(waypointsToGoal((XGoal, YGoal), Waypoints)).
 			if true then insert(actionPlan(ActionPlan)).	
@@ -67,9 +69,14 @@ module goTo {
 			
 		% Perform a-star search with clearing enabled
 		% Ensure clearing is updated to the new scenario
+		if bel(myPosition(MyX, MyY)) then print("Starting A* search WITH clearing") +
+			print((MyX, MyY)) +
+			print((XGoal, YGoal)).
+			
 		if bel(astarClear(XGoalr, YGoalr, AbsolutePath, ActionPlan)),
 		   bel(ActionPlan = [FirstAction|_])
-		then {			
+		then {
+			if true then print("Found action plan: ") + print(ActionPlan).	
 		    if bel(findWaypoints(AbsolutePath, Waypoints))
 			then insert(waypointsToGoal((XGoal, YGoal), Waypoints)).
 			if true then insert(actionPlan(ActionPlan)).	
@@ -77,5 +84,8 @@ module goTo {
 			if bel(FirstAction = rotate(R)) then rotate(R) + exit-module.
 			if bel(FirstAction = clear(X, Y)) then clear(X, Y) + exit-module.
 		}
+		
+		% Find new spot
+		% TODO
 	}
 }

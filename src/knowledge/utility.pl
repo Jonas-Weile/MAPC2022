@@ -1,5 +1,3 @@
-
-
 obstacle(Xr, Yr) :-
 	thing(Xr, Yr, obstacle, _).
 			
@@ -24,10 +22,15 @@ nameToNumber(Name, Number) :-
  	string_concat("Channel", Number, Channel).
 
  	
-taskToChannel(TaskMaster, TaskName, ChannelName) :-
-	string_concat(TaskMaster, "_", FirstHalf),
- 	string_concat(TaskName, "_Channel", SecondHalf),
- 	string_concat(FirstHalf, SecondHalf, ChannelName).
+taskToChannel(TaskMaster, TaskPlan, ChannelName) :-
+	TaskPlan = taskPlan(_, TaskName, _, _, _, _, Connections),
+	member((SubmitAgent, _, _, _, 1), Connections),
+	string_concat(TaskMaster, "_", First),
+ 	string_concat(TaskName, "_", Second),
+ 	string_concat(SubmitAgent, "_Channel", Third),
+ 	string_concat(First, Second, S1),
+ 	string_concat(S1, Third, ChannelName).
+ 	
  	
 
 % Absolute value of a number

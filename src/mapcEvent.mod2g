@@ -29,11 +29,11 @@ module mapcEvent {
 			
 		if percept(step(S), S > 0, S < LastStep) then {
 			
-			% if a-goal(fullyConnected) then receiveConnectionUpdates.	
+			if a-goal(fullyConnected) then receiveConnectionUpdates.	
 		
-			if a-goal(fullyConnected ; findMapDimensions) then receiveConnectionRequests.
+			if a-goal(fullyConnected) then receiveConnectionRequests.
 			
-			% if a-goal(fullyConnected) then sendConnectionUpdates.
+			if a-goal(fullyConnected) then sendConnectionUpdates.
 							
 			if true then updateGoals.		
 					
@@ -43,11 +43,11 @@ module mapcEvent {
 		
 			if true then shareInformation.
 			
-			if a-goal(fullyConnected ; findMapDimensions) then sendConnectionRequests.
+			if a-goal(fullyConnected) then sendConnectionRequests.
 			
-		%	if bel(name(MyName), taskMaster(MyName)) then taskPlanning_TaskMaster.
+			if bel(name(MyName), taskMaster(MyName)) then taskPlanning_TaskMaster.
 			
-		%	if bel(taskMaster(_)), bel(name(MyName)), not(bel(taskMaster(MyName))) then taskPlanning_OtherAgents.			
+			if bel(taskMaster(_)), bel(name(MyName)), not(bel(taskMaster(MyName))) then taskPlanning_OtherAgents.			
 		
 			if a-goal(fullyConnected), not(bel(taskMaster(_))) then findTaskMaster.
 		}

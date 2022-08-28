@@ -13,24 +13,17 @@ module mapcMain {
 	% The taskmaster is always busy planning.
 	if bel(name(MyName)),
 	   bel(taskMaster(MyName))
-	then skip + print("Skipped step as TaskMaster").
+	then skip.
 	
 	% We have a task to solve!
-	% if bel(taskPlan(_, _, _, _, _, _, _)) then solveTask.
+	if bel(taskPlan(_, _, _, _, _, _, _)) then solveTask.
+	
+	% Remove old conncetions
+	if bel(furthestConnectionFromTo(X1, Y1, X2, Y2))
+	then disconnect(X1, Y1, X2, Y2).
 		
 	% Otherwise, explore
 	if goal(explore) then explore.
-	
-	% We do not have a task, and we are not exploring, but are still connected to block(s)..
-	% Detach these blocks!
-	% if bel(connectionFromTo(_, _, _)),
-	%    bel(connectedBlocks(Dir1, _)),
-	%    bel(translate(Dir1, 0, 0, X1, Y1)),
-	%    bel(translate(_, X1, Y1, X2, Y2)),
-	%    not(bel(X1 = X2, Y1 = Y2)),
-	%    bel(thing(X2, Y2, block, _)),
-	%    bel(attached(X2, Y2))
-	% then disconnect(X1, Y1, X2, Y2) + print("disconnected: ", X1, Y1, X2, Y2).
 	
 	% Skip - avoid no_action
 	if true then skip.

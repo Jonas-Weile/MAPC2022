@@ -19,7 +19,7 @@ astarClear(GoalXr, GoalYr, Path, Actions) :-
     empty_heap(Frontier),
     getAttachments(Attachments),
     energy(Level),
-    validClearActions(0,0, 0, 0, Level, [], [], Attachments, [], GoalXr, GoalYr, [], Frontier, ExpandedFrontier),
+    expandFrontierClear(0, 0, 0, 0, Level, [], [], Attachments, [], GoalXr, GoalYr, Frontier, [], ExpandedFrontier),
     astarRecursiveClear(GoalXr, GoalYr, ExpandedFrontier, [state((0,0), Attachments, [])], [(FinalX, FinalY)|RevPath], RevActions),!,
     % Ensure we ended up closer than we started
     distanceBetweenPoints_Euclidian(0, 0, GoalXr, GoalYr, StartDist),
@@ -98,7 +98,7 @@ validRotateActions(X,Y,_, 1, _, _, _, _, _, _, _, _,Frontier,Frontier):-
 	not(obstacleClose(X,Y)).
 validRotateActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path, ParentActions, ParentAttachments, ParentClearedCells, GoalX, GoalY, ExpandedStates, Frontier, ExpandedFrontier):-
     (ParentRotationLimit = 1 -> RotationLimit = 0; RotationLimit is ParentRotationLimit+1),
-    StepCost is ParentStepCost +1,
+    StepCost is ParentStepCost + 2,
 	heuristic(X, Y, GoalX, GoalY, StepCost, Heuristic),
     updateEnergy(ParentEnergy, UpdatedEnergy),
     findall(Heuristic-state((X,Y), StepCost, RotationLimit, UpdatedEnergy, Path, [rotate(R)|ParentActions], Attachments, ParentClearedCells),
@@ -113,18 +113,18 @@ validRotateActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path,
 % validClearActions(+X,+Y, +ParentStepCost, +ParentRotationLimit, +ParentEnergy, +Path, +ParentActions, +ParentAttachments, +ParentClearedCells, +GoalX, +GoalY, +ExpandedStates, +Frontier, -ExpandedFrontier)
 validClearActions(_,_, _, _, ParentEnergy, _, _, _, _, _, _, _, Frontier, Frontier):-
     not(checkEnergy(ParentEnergy, _)).
+    
 validClearActions(X,Y, ParentStepCost, ParentRotationLimit, ParentEnergy, Path, ParentActions, ParentAttachments, ParentClearedCells, GoalX, GoalY, ExpandedStates, Frontier, ExpandedFrontier):-
-    clearSteps(ClearSteps),
     team(Team),
     checkEnergy(ParentEnergy, EnergyAfterClear),
     updateEnergy(EnergyAfterClear, UpdatedEnergy),
-    StepCost is ParentStepCost + ClearSteps,
+    StepCost is ParentStepCost + 5,
     heuristic(X, Y, GoalX, GoalY, StepCost, Heuristic),
-    cellsInRange(X, Y, 2, 3, PotentialClearCells), 
     findall(Heuristic-state((X,Y), StepCost, ParentRotationLimit, UpdatedEnergy, Path, [clear(CellX, CellY)|ParentActions], ParentAttachments, AllClearedCells),
-            (member((CellX, CellY), PotentialClearCells),
-            clearedCells(CellX, CellY, ClearedCells),
-            not(( member((ClearedX, ClearedY), ClearedCells), (attached(ClearedX, ClearedY) ; thing(ClearedX, ClearedY, entity, Team)) )),
+            (anyDirection(D), translate(D, X, Y, CellX, CellY), astarBlocked(D, X, Y, ParentAttachments, ParentClearedCells), 
+            (obstacle(CellX, CellY) ; thing(CellX, CellY, block, _)),
+            not(member((CellX, CellY), ParentClearedCells)), ClearedCells = [(CellX, CellY)],
+            not(((attached(CellX, CellY) ; thing(CellX, CellY, entity, Team)) )),
             append(ClearedCells, ParentClearedCells, AllClearedCells),
             not(member(state((X,Y), ParentAttachments, AllClearedCells),ExpandedStates))
             ),
@@ -150,23 +150,14 @@ insertListInHeap(List, Heap, ExpandedHeap):-
 % get cleared cells after a clear action
 % clearedCells(+CellX, +CellY, -ClearedCells)
 clearedCells(CellX, CellY, ClearedCells):-
-	cellsInRange(CellX, CellY, 1, Cells), 
-	findall((X, Y),
-		(member((X, Y), Cells),
-		(
-			thing(X, Y, block, _);
-			obstacle(X, Y)
-		)),
-		ClearedCells).
+	ClearedCells = [(CellX, CellY)].
 
 % Used to check if an agent has enough energy to perform a clear action
 % checkEnergy(+CurrentEnergy, -UpdatedEnergy)       
-checkEnergy(CurrentEnergy, UpdatedEnergy):-
-    clearSteps(ClearSteps),
+checkEnergy(CurrentEnergy, UpdatedEnergy) :-
     clearEnergyCost(ClearCost), 
-    TotalEnergyCost = ClearSteps*ClearCost,
-    CurrentEnergy >= TotalEnergyCost,
-    UpdatedEnergy is CurrentEnergy - TotalEnergyCost.
+    CurrentEnergy >= ClearCost,
+    UpdatedEnergy is CurrentEnergy - ClearCost.
 
 % Used to update energy level in internal state in astar. 
 % updateEnergy(+CurrentEnergy, -UpdatedEnergy)

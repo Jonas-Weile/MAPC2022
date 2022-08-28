@@ -132,7 +132,7 @@ findNewConnections(ConnectionUpdateList, NewConnections, MapDimensions) :-
     	ord_del_element(AllConnections, (MyName, 0, 0), AllConnectionsWithoutMe),
     	ord_subtract(AllConnectionsWithoutMe, OldConnections, NewConnections),
 	
-	findBestMapDimensions(FoundMapDimensions, MapDimensions).
+	findBestMapDimensions(xx, MapDimensions).
 	
 	
 findNC_folder(_, Agent, Input, Output) :-

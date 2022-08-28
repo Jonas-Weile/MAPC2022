@@ -7,7 +7,9 @@ module explore {
 	if goal(fullyEquipped), bel(myRole(MyRole)), bel(canAttach(MyRole)) then {
 		
 		% We have found a block/dispenser
-		if bel(closestBlockOrDispenserInVision(Xr, Yr, _, _)) then {
+		if bel(closestBlockOrDispenserInVision(Xr, Yr, _, _)), 
+		not(bel(adjacent(Xr, Yr, Xa, Ya), thing(Xa, Ya, entity, _), Xa \= 0, Ya \= 0)) 
+		then {
 			% If we must rotate, do so if possible, or move in *some* direction
 			if bel(adjacent(0, 0, Xr, Yr), rotationRequiredToAttach(Xr, Yr)) then {
 				if bel(possibleRotationToAttach(Xr, Yr, R)) then rotate(R).
@@ -47,11 +49,35 @@ module explore {
 	}
 	
 	
-	% .. Otherwise, keep on exploring
-	if bel(exploreAction(Action, Params)) then {
+	% If we have found a taskmaster and some blocks, gravitate towards the goalZones.
+	if bel(taskMaster(_)), not(goal(fullyEquipped))
+	then {
+		
+		% Get out of the way
+		% if bel(approachingTeamMate(Xr, Yr, Direction))
+		% then {
+		% 	% Void
+		% }
+	
+		% Get in the way
+		% if bel(approachingEnemy(Xr, Yr, Direction))
+	    % then {
+		% 	% Void
+		% }
+		
+		% Stay near goalZone
+		if bel(exploreGoalZonesAction(Action, Params)) then {
 			if bel(Action = move, [D] = Params) then move(D).
 			if bel(Action = rotate, [R] = Params) then rotate(R).
 			if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
+		}
+	}
+	
+	%%% .. Otherwise, keep on exploring.
+	if bel(exploreAction(Action, Params)) then {
+		if bel(Action = move, [D] = Params) then move(D).
+		if bel(Action = rotate, [R] = Params) then rotate(R).
+		if bel(Action = clear, [Xc, Yc] = Params) then clear(Xc, Yc).
 	}
 	
 	% TODO
