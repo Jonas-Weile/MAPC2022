@@ -6,22 +6,22 @@ This is the reporsitory of the GOAL-DTU team for the 2022 Multi-Agent Programmin
 ---
 ### Module Organization
 ---
-[communication](./GOAL-DTU/src/modules/communication/) - contains all logic for communication between agents; this includes connecting with other agents and sharing knowledge.
+[communication](./src/modules/communication/) - contains all logic for communication between agents; this includes connecting with other agents and sharing knowledge.
    
 
-[goals](./GOAL-DTU/src/modules/goals/) - contains all logic involved with setting/updating goals.
+[goals](./src/modules/goals/) - contains all logic involved with setting/updating goals.
    
    
-[main](./GOAL-DTU/src/modules/main/) - contains the *'main'* modules - these are the modules directly called from [mapcMain.mod2g](/GOAL-DTU/src/mapcMain.mod2g).
+[main](./src/modules/main/) - contains the *'main'* modules - these are the modules directly called from [mapcMain.mod2g](/src/mapcMain.mod2g).
    
    
-[percepts](./GOAL-DTU/modules/percepts/) - contains all modules for updating and initializing the percepts of the agent.
-   
-
-[roles](./GOAL-DTU/src//modules/roles/) - currently not used.
+[percepts](./modules/percepts/) - contains all modules for updating and initializing the percepts of the agent.
    
 
-[taskplanning](./GOAL-DTU/src/modules/taskplanning/) - contains all logic needed for **creating** taskplans.
+[roles](./src//modules/roles/) - currently not used.
+   
+
+[taskplanning](./src/modules/taskplanning/) - contains all logic needed for **creating** taskplans.
 
 
 ---
@@ -45,7 +45,7 @@ Norms are completely ignored. The *norm percepts* are saved by each agent, but t
 ---
 ### Knowledge
 ---
-The built-in *knowledge* of the agents is split into several different *'prolog knowledge files'* mostly following the same scheme as for **modules**. However, for GOAL to work properly (or at least the easiest way to make it so) is to collect all knowledge into a single file. Therefore, we have created a [batch file](./GOAL-DTU/resources/myscript.bat) that collects all knowledge into a single file.
+The built-in *knowledge* of the agents is split into several different *'prolog knowledge files'* mostly following the same scheme as for **modules**. However, for GOAL to work properly (or at least the easiest way to make it so) is to collect all knowledge into a single file. Therefore, we have created a [batch file](./resources/myscript.bat) that collects all knowledge into a single file.
 
 The batch file can be executed directly from eclipse:
    1. Go to the navigation bar and open *run*.
