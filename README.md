@@ -33,7 +33,7 @@ The agents elect a single agent as *TaskMaster*. The taskmaster will prompt agen
 A taskplan is highly specified with a static assembly point, an elected *submit-agent*, as well as a number of agents to supply the necessary blocks. 
 The taskmaster chooses the assembly point among the known goalcells, and all agents then calculate where to deliver their blocks respective to this static point.
 
-***OBS.*** this means, that at this point in time, a taskplan will completely fail if the assembly point is blocked by another agent or similar, as the assembly point is not dynamically recomputed - see the section [TODO](https://github.com/Jonas-Weile/MAPC2022/edit/main/README.md#todo).
+***OBS.*** this means, that at this point in time, a taskplan will completely fail if the assembly point is blocked by another agent or similar, as the assembly point is not dynamically recomputed - see the section [TODO](#todo).
 
 #### Roles
 The current iteration of the code does not take advantage of the respective strengths/weaknesses of the different roles. Instead, all agents will change their role from *'default'* to *'worker'* at the first given opportunity, and then stick with this role throughout the simulation.
