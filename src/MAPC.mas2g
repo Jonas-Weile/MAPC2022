@@ -1,6 +1,8 @@
 use "..\resources\eismassim\eismassim-4.4-jar-with-dependencies.jar" as environment 
 	with configFile="..\resources\eismassim\eismassimconfig.json".
-
+	
+% cd C:\Users\schle\Documents\GitHub\MAPC2022\resources\server
+% java -jar server-2020-2.0-jar-with-dependencies.jar --monitor
 define universal as agent {
 	use mapcInit as init.
 	use mapcMain as main.

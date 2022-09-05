@@ -6,8 +6,16 @@ exit=never.
 
 module mapcMain {
 
+
 	if percept(step(0)) then skip.
 	if bel(restart) then skip.
+	
+	
+	if bel(roleCell(Xr,Yr)) then print("ROLE CELL ::::::::::::::::::::: " + Xr + "                     " + Yr).
+	
+	if bel(roleZone(Xr,Yr)) then print("ROLE ZONE ::::::::::::::::::::: " + Xr + "                     " + Yr) .
+	
+
 	
 	if bel(name(MyName)),
 	   bel(taskMaster(MyName))
@@ -17,6 +25,11 @@ module mapcMain {
 		   not(percept(thing(_, _, taskboard, _)))
 		then skip.
 	}
+	
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ROLE ZONE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TASKS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 	if bel(name(MyName)),
@@ -57,7 +70,7 @@ module mapcMain {
 				then insert(goTo(Xdr, Ydr)) + movementModule. 
 			}
 			
-			
+			% I DONT THINK THERE ARE ANY MORE TASKBOARDS
 			% Our job is to accept the task
 			if bel(CurrentToDo = taskboard(Xt, Yt)), 
 			   bel(relativePositionOfCoordinatesFromMe(Xt, Yt, Xtr, Ytr)) then {	
@@ -77,7 +90,7 @@ module mapcMain {
 					 then detach(Dir).
 				}
 					
-				% If we are within reach of the taskboard, accept the task
+				% If we are within reach of the taskboard, accept the task ATTENTION TASK DON*T HAVE TO BE ACCEPTED ANYMORE
 				if bel(distanceBetweenPoints_Manhattan(0, 0, Xtr, Ytr, Dist)),
 				   bel(Dist =< 2)
 				then accept(TaskName).
@@ -192,8 +205,8 @@ module mapcMain {
 			if bel(blockInView(Xr, Yr, _), direction(Xr, Yr, Dir)) 
 				then attach(Dir).
 				
-			if bel(dispenserInView(Xr, Yr, _), direction(Xr, Yr, Dir))
-				then request(Dir).
+			if bel(dispenserInView(Xr, Yr, _), direction(Xr, Yr, Dir), canRequest)
+				then request(Dir). 
 		
 			% We are not next to block nor dispenser, but we have our eyes on the prize
 			if bel(goToAction(Xr, Yr, Action)) 
@@ -207,11 +220,24 @@ module mapcMain {
 	
 	% Keep on exploring
 	if goal(explore) then {
+	
+		if bel(myRole(default,_,_,_,_,_), roleCell(Xr,Yr)) then {
+			
+			if bel(roleCell(0,0)) then print("TRY TO ADOPT ROLE") + adoptt(explorer).     % adopt won't work like that
+			if bel(direction(Xr,Yr,D)), bel(obstacle(Xr,Yr)) then print("CLEAR TO GO TO ROLEZONE") + clear(Xr, Yr).
+			if bel(direction(Xr,Yr,D)) then print("MOVE TO ROLEZONE") + move(D).
+			
+			if true then print("GGGGGGGG").
+		}  
 		
-		
-		
+		%CAREFUL WITH SAFEEXPLOFRE, VALIDDIRECTION CHECKS FOR AGENTS ECT.. !!!!!!!!!!!!! It'll block in front of an agent for example, because it tries to "move" forever
+		% ALSO we clear without checking our hp, maybe we deactivate ourselves. Is that strategic ?
 		if bel(safeExploreDirectionsBIS(D)) then {
-			if bel(direction(Xr,Yr,D)), bel(obstacle(Xr,Yr)) then clear(Xr,Yr).
+			%if bel(directionPlusOne(Xr,Yr,D, Xr1, Yr1)), bel(obstacle(Xr,Yr)) then clear(Xr1, Yr1).
+			if bel(direction(Xr,Yr,D)), bel(obstacle(Xr,Yr)) then clear(Xr, Yr).   % ONLY FOR DEFAULT ROLE WITH CLEAR RANGE OF 1
+				
+				%if bel(D = n) then Yn is Yr + 1, clear(Xr,Yn).
+			
 			if true then move(D).
 		}
 	}

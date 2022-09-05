@@ -47,11 +47,13 @@ module getPercepts {
 		then delete(deactivated(D)).
 	
 	
-	%%%%%%%%%%%%%%%%%%%% PERCEIVE ROLE %%%%%%%%%%%%%%%%%%%%
+	%%%%%%%%%%%%%%%%%%%% PERCEIVE ROLE (OF LAST SURVEYED PERSON?) %%%%%%%%%%%%%%%%%%%%
 	if percept(role(R)), not(bel(role(R)))
 		then insert(role(R)).
 	if bel(role(R)), not(percept(role(R)))
 		then delete(role(R)).
+		
+	
 	
 		
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE THINGS %%%%%%%%%%%%%%%%%%%%%%% markers will be set here. 
@@ -74,6 +76,8 @@ module getPercepts {
 		do insert(roleZone(Xr, Yr)).
 	forall bel(roleZone(Xr, Yr)), not(percept(roleZone(Xr, Yr))) 
 		do delete(roleZone(Xr, Yr)).	
+		
+	
 		
 		
 	%%%%%%%%%%%%%%%%%%%%%% PERCEIVE EVENTS %%%%%%%%%%%%%%%%%%%%%%

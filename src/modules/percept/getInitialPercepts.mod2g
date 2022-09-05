@@ -25,6 +25,10 @@ module getInitialPercepts {
 	% Roles
 	forall percept(role(Name, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)) do
 		insert(role(Name, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)).
+	
+	%if percept(role(default, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)) then
+	%	insert(role(default, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)).
+		
 		
 	% Set initial clear-beliefs
 	if true then 

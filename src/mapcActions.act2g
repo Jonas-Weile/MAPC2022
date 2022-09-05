@@ -54,4 +54,18 @@ define accept(TaskName) with
 define skip with
 	pre { true }
 	post{ true }
+	
+% adopt
+define adoptt(RoleName)  with  % two Ts because adopt is protected
+	pre { true }
+	post { true }
+	
+% survey
+define survey(X,Y) with    % used for surveying an agent ?
+	pre { true }
+	post {true }
+
+define survey(TargetType) with  % surveys the closest targettype found ( dispenser, goalzone, rolezone)
+	pre { true }
+	post { true }
 		

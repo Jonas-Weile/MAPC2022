@@ -2,7 +2,7 @@
  
  	%%%%%% COMMON %%%%%%
 	name/1, team/1, teamSize/1, steps/1, vision/1, clearEnergyCost/1, maxEnergy/1, 
-	clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1, role/6,
+	clearing/2, clearSteps/1, clearStepsCounter/1, completedClearAction/1, role/6, myRole/6,
 	
 	% Environment percepts
 	step/1, score/1, lastAction/1, lastActionResult/1, lastActionParams/1,
@@ -71,7 +71,10 @@
 	%%%%%%%%%% THESE ARE SIMPLY TO STOP GOAL FROM COMPLAINING %%%%%%%%%
 	translateToMyOrigin_Agent/2, findNC_folder/1, collectListsToSets/0, gcd_helper/0,
 	connectedBlocks_folder/0, rankTask/0, buildAgentPlanFromAssignments/1, relativeToAbsolutePositionOfPoints/0.			
-			
+		
+% ROLE
+
+%myRole(Name, Vision, Actions, Speeds, ClearChance, ClearMaxDistance).
 			
 obstacle(Xr, Yr) :-
 	thing(Xr, Yr, obstacle, _).
@@ -149,19 +152,43 @@ connectedBlocks_folder((X, Y, Agent), OldConnections, AllConnectedBlocks) :-
 % The locations around (X, Y) has no agents.
 agentFreeRelativeLocation(Xr, Yr) :-
 	not((adjacentPositions(Xr, Yr, Xa, Ya), thing(Xa, Ya, entity, _))).
+	
+	
+	
+%%%%% ROLES %%%%%%
+
+canRequest :-
+	myRole(_ , _ , Actions, _ , _ , _ ),
+	member(X, Actions),
+	X = request.
+	
+
+	
 
 
-%%%%% MOVING %%%%%
+
+
+%%%%% MOVING %%%%%                                                                                                     WHY IS N AND S -1 AND +1 RESPECTIVELY. SHOULDNT IT BE CONTRARY ?
 % Moving in a given direction 
 translate(n, X1, Y1, X2, Y2) :- X2 = X1, Y2 is Y1 - 1.
 translate(s, X1, Y1, X2, Y2) :- X2 = X1, Y2 is Y1 + 1.
 translate(e, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 + 1.
 translate(w, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 - 1.
 
+translatePlusOne(n, X1, Y1, X2, Y2) :- X2 = X1, Y2 is Y1 - 2. 
+translatePlusOne(s, X1, Y1, X2, Y2) :- X2 = X1, Y2 is Y1 + 2. 
+translatePlusOne(e, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 + 2. 
+translatePlusOne(w, X1, Y1, X2, Y2) :- Y2 = Y1, X2 is X1 - 2. 
+
 
 % Direction of relative position
 direction(Xr, Yr, D) :-
 	translate(D, 0, 0, Xr, Yr).
+	
+directionPlusOne(Xr, Yr, D, Xr1, Yr1 ):-
+	translate(D, 0, 0, Xr, Yr),
+	translatePlusOne(D, 0, 0, Xr1, Yr1).
+	
 
 % Is direction blocked
 blocked(D) :- 

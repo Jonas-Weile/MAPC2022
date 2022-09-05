@@ -10,6 +10,11 @@ module initBeliefState {
 	if true then
 		insert(myPosition(0, 0)) +
 	    insert(visited(0, 0, 0)).
+	   
+	if bel(role(default, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)) then
+		insert(myRole(default, Vision, Actions, Speeds, ClearChance, ClearMaxDistance)).
+	    
+
 	    
 	% Generate direction list permutations
 	if bel(name(N), nameToSeed(N, Seed)) then {
