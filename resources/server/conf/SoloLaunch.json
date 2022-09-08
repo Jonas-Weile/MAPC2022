@@ -15,9 +15,9 @@
   },
 
   "manual-mode" : [
-    ["A", "B"],
+    ["GOAL-DTU", "B"],
     ["B", "C"],
-    ["A", "C"]
+    ["GOAL-DTU", "C"]
   ],
 
   "match" : [
@@ -26,7 +26,6 @@
   ],
 
   "teams" : {
-    "A" : {"prefix" : "agent", "password" : "1"},
-    "B" : {"prefix" : "agent", "password" : "1"}
+    "GOAL-DTU" : {"prefix" : "agent", "password" : "ebn49db"},
   }
 }
